@@ -565,7 +565,7 @@ function updateBoss(){
       if(magicBolts.length<20) magicBolts.push({x:boss.x+20,y:boss.y+28,vx:dx/dist*spd2+spread,vy:dy/dist*spd2,fromBoss:true,life:200});
     }
   }
-  if(overlap(player.x,player.y,player.w,player.h,boss.x,boss.y,boss.w,boss.h)) hurtPlayer(18);
+  if(overlap(player.x,player.y,player.w,player.h,boss.x,boss.y,boss.w,boss.h)) hurtPlayer(5);
   if(boss.y>H+80){boss.y=50;boss.vy=0;}
 }
 
@@ -592,7 +592,7 @@ function updateBolts(){
       continue;
     }
     if(b.fromBoss&&overlap(b.x-5,b.y-5,10,10,player.x,player.y,player.w,player.h)){
-      hurtPlayer(18); magicBolts.splice(i,1);
+      hurtPlayer(5); magicBolts.splice(i,1);
     }
   }
 }
