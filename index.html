@@ -95,7 +95,7 @@
       width: 100%;
       height: 100%;
       image-rendering: pixelated;
-      cursor: none;
+      cursor: crosshair;
     }
 
     #ctrl {
@@ -1967,27 +1967,45 @@
       ctx.fillStyle = ch.aura;
       ctx.beginPath(); ctx.ellipse(px + 8, py + 17, 9, 11, 0, 0, Math.PI * 2); ctx.fill();
 
-      // Username label above head
+      // Username nameplate above head
       if (globalUsername && globalUsername !== 'Hero') {
         const label = globalUsername;
         ctx.save();
-        ctx.font = 'bold 9px \'Courier New\', monospace';
+        ctx.font = 'bold 11px \'Courier New\', monospace';
         ctx.textAlign = 'center';
-        const labelW = ctx.measureText(label).width + 8;
+        const textW = ctx.measureText(label).width;
+        const padX = 10, padY = 5;
         const labelX = px + 8;
-        const labelY = py - (ch.horns ? 26 : 20);
-        // Pill background
-        ctx.fillStyle = `rgba(6,0,16,0.82)`;
+        const labelY = py - (ch.horns ? 32 : 24);
+        const boxW = textW + padX * 2;
+        const boxH = 14 + padY;
+        const boxX = labelX - boxW / 2;
+        const boxY = labelY - boxH + 2;
+
+        // Dark solid background
+        ctx.fillStyle = 'rgba(2,0,10,0.92)';
         ctx.beginPath();
-        ctx.roundRect(labelX - labelW / 2, labelY - 8, labelW, 12, 4);
+        ctx.roundRect(boxX, boxY, boxW, boxH, 5);
         ctx.fill();
-        // Glowing border
+
+        // Glowing border in character color
         ctx.strokeStyle = ch.glow || '#a78bfa';
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 1.5;
+        ctx.shadowColor = ch.glow || '#a78bfa';
+        ctx.shadowBlur = 6;
         ctx.stroke();
-        // Text
-        ctx.fillStyle = ch.glow || '#e9d5ff';
-        ctx.fillText(label, labelX, labelY + 1);
+        ctx.shadowBlur = 0;
+
+        // Accent bar along the top of the pill
+        ctx.fillStyle = ch.glow || '#a78bfa';
+        ctx.fillRect(boxX + 5, boxY, boxW - 10, 2);
+
+        // White text with shadow
+        ctx.shadowColor = 'rgba(0,0,0,0.9)';
+        ctx.shadowBlur = 4;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(label, labelX, labelY - 2);
+        ctx.shadowBlur = 0;
         ctx.restore();
       }
     }
