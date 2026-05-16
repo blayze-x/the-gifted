@@ -878,11 +878,20 @@
 <body>
 
 
-  <div id="usernamescreen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#060010; z-index:700; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:25px;">
-    <h1 style="color:#a78bfa; font-size:32px; letter-spacing:4px; text-shadow:0 0 20px #7c3aed; margin:0; font-family:'Courier New',monospace;">IDENTIFY YOURSELF</h1>
-    <div style="color:#c4b5fd; font-size:14px; letter-spacing:1px; font-family:'Courier New',monospace;">Who will answer the call?</div>
-    <input type="text" id="unameinput" placeholder="Enter your name..." style="background:#0a0018; border:2px solid #2e1065; color:#e9d5ff; font-family:'Courier New',monospace; font-size:18px; padding:12px 20px; border-radius:8px; outline:none; text-align:center; width:280px; transition:border-color 0.2s;" onfocus="this.style.borderColor='#7c3aed'" onblur="this.style.borderColor='#2e1065'">
-    <button onclick="submitUsername()" style="background:#3b0764; border:2px solid #7c3aed; color:#e9d5ff; font-size:16px; padding:12px 40px; border-radius:8px; cursor:pointer; font-family:'Courier New',monospace; letter-spacing:2px; transition:all 0.2s; margin-top:10px;" onmouseover="this.style.background='#5b21b6'; this.style.boxShadow='0 0 20px rgba(124, 58, 237, 0.5)';" onmouseout="this.style.background='#3b0764'; this.style.boxShadow='none';">ENTER REALM</button>
+  <div id="usernamescreen"
+    style="position:fixed; top:0; left:0; width:100%; height:100%; background:#060010; z-index:700; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:25px;">
+    <h1
+      style="color:#a78bfa; font-size:32px; letter-spacing:4px; text-shadow:0 0 20px #7c3aed; margin:0; font-family:'Courier New',monospace;">
+      IDENTIFY YOURSELF</h1>
+    <div style="color:#c4b5fd; font-size:14px; letter-spacing:1px; font-family:'Courier New',monospace;">Who will answer
+      the call?</div>
+    <input type="text" id="unameinput" placeholder="Enter your name..."
+      style="background:#0a0018; border:2px solid #2e1065; color:#e9d5ff; font-family:'Courier New',monospace; font-size:18px; padding:12px 20px; border-radius:8px; outline:none; text-align:center; width:280px; transition:border-color 0.2s;"
+      onfocus="this.style.borderColor='#7c3aed'" onblur="this.style.borderColor='#2e1065'">
+    <button onclick="submitUsername()"
+      style="background:#3b0764; border:2px solid #7c3aed; color:#e9d5ff; font-size:16px; padding:12px 40px; border-radius:8px; cursor:pointer; font-family:'Courier New',monospace; letter-spacing:2px; transition:all 0.2s; margin-top:10px;"
+      onmouseover="this.style.background='#5b21b6'; this.style.boxShadow='0 0 20px rgba(124, 58, 237, 0.5)';"
+      onmouseout="this.style.background='#3b0764'; this.style.boxShadow='none';">ENTER REALM</button>
   </div>
 
   <div id="introscreen" style="display:none;">
@@ -1027,7 +1036,7 @@
       // When Shift is released, clear all movement keys that may have been
       // "stuck" because the browser drops keyup events while Shift is held.
       if (e.key === 'Shift') {
-        ['a','A','d','D','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','w','W',' '].forEach(k => keys[k] = false);
+        ['a', 'A', 'd', 'D', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'w', 'W', ' '].forEach(k => keys[k] = false);
       }
     });
     // Clear all keys when the window loses focus so nothing gets stuck.
@@ -1043,11 +1052,11 @@
       }
     }
     window.addEventListener('mousemove', updateMousePos);
-    window.addEventListener('mousedown', e => { 
-      if (e.button === 0) { 
-        mouseDown = true; 
-        updateMousePos(e); 
-      } 
+    window.addEventListener('mousedown', e => {
+      if (e.button === 0) {
+        mouseDown = true;
+        updateMousePos(e);
+      }
     });
     window.addEventListener('mouseup', e => { if (e.button === 0) mouseDown = false; });
 
