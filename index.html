@@ -1024,7 +1024,14 @@
       const tag = document.activeElement && document.activeElement.tagName;
       if (tag === 'TEXTAREA' || tag === 'INPUT') return;
       keys[e.key] = false;
+      // When Shift is released, clear all movement keys that may have been
+      // "stuck" because the browser drops keyup events while Shift is held.
+      if (e.key === 'Shift') {
+        ['a','A','d','D','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','w','W',' '].forEach(k => keys[k] = false);
+      }
     });
+    // Clear all keys when the window loses focus so nothing gets stuck.
+    window.addEventListener('blur', () => { Object.keys(keys).forEach(k => keys[k] = false); });
 
     let mouseX = W / 2, mouseY = H / 2, mouseDown = false, useMouseAim = false;
     function updateMousePos(e) {
