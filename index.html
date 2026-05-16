@@ -1484,9 +1484,9 @@
       if (zP && !lastZ && player.blastCD <= 0) {
         let vx = player.facing * 6;
         let vy = -0.3;
-        
-        // Aim with mouse if fighting boss and mouse has been used
-        if (LEVELS[cLvl].boss && useMouseAim) {
+
+        // Always aim with mouse when the mouse has been moved
+        if (useMouseAim) {
           const px = player.x + 8;
           const py = player.y + 16;
           const dx = mouseX - px;
@@ -1966,6 +1966,30 @@
       // General aura
       ctx.fillStyle = ch.aura;
       ctx.beginPath(); ctx.ellipse(px + 8, py + 17, 9, 11, 0, 0, Math.PI * 2); ctx.fill();
+
+      // Username label above head
+      if (globalUsername && globalUsername !== 'Hero') {
+        const label = globalUsername;
+        ctx.save();
+        ctx.font = 'bold 9px \'Courier New\', monospace';
+        ctx.textAlign = 'center';
+        const labelW = ctx.measureText(label).width + 8;
+        const labelX = px + 8;
+        const labelY = py - (ch.horns ? 26 : 20);
+        // Pill background
+        ctx.fillStyle = `rgba(6,0,16,0.82)`;
+        ctx.beginPath();
+        ctx.roundRect(labelX - labelW / 2, labelY - 8, labelW, 12, 4);
+        ctx.fill();
+        // Glowing border
+        ctx.strokeStyle = ch.glow || '#a78bfa';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        // Text
+        ctx.fillStyle = ch.glow || '#e9d5ff';
+        ctx.fillText(label, labelX, labelY + 1);
+        ctx.restore();
+      }
     }
 
 
