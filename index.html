@@ -1019,6 +1019,15 @@
       keys[e.key] = false;
     });
 
+    let mouseX = 0, mouseY = 0, mouseDown = false;
+    canvas.addEventListener('mousemove', e => {
+      const rect = canvas.getBoundingClientRect();
+      mouseX = (e.clientX - rect.left) / (rect.width / W);
+      mouseY = (e.clientY - rect.top) / (rect.height / H);
+    });
+    canvas.addEventListener('mousedown', e => { if (e.button === 0) mouseDown = true; });
+    canvas.addEventListener('mouseup', e => { if (e.button === 0) mouseDown = false; });
+
     // ── THEMES ──────────────────────────────────────────────────────────────────
     const T = {
       dark: { sky: '#060010', mid: '#0f0524', plat: '#2e1065', platTop: '#6d28d9', platGlow: '#a78bfa', star: true },
@@ -1423,7 +1432,7 @@
     let lastJump = false, lastZ = false, lastSh = false;
     function updatePlayer() {
       const jP = keys['ArrowUp'] || keys['w'] || keys['W'] || keys[' '];
-      const zP = keys['z'] || keys['Z'];
+      const zP = keys['z'] || keys['Z'] || mouseDown;
       const shP = keys['Shift'];
       const lP = keys['ArrowLeft'] || keys['a'] || keys['A'];
       const rP = keys['ArrowRight'] || keys['d'] || keys['D'];
@@ -1457,8 +1466,22 @@
       if (player.jumpBuf > 0) player.jumpBuf--;
 
       if (zP && !lastZ && player.blastCD <= 0) {
-        const bx = player.x + (player.facing > 0 ? player.w + 2 : - 6);
-        magicBolts.push({ x: bx, y: player.y + 12, vx: player.facing * 6, vy: -0.3, fromBoss: false, life: 90 });
+        let vx = player.facing * 6;
+        let vy = -0.3;
+        
+        if (LEVELS[cLvl].boss) {
+          const px = player.x + 8;
+          const py = player.y + 16;
+          const dx = mouseX - px;
+          const dy = mouseY - py;
+          const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+          vx = (dx / dist) * 6.5;
+          vy = (dy / dist) * 6.5;
+          if (Math.abs(dx) > 0.1) player.facing = dx > 0 ? 1 : -1;
+        }
+
+        const bx = player.x + (vx > 0 ? player.w + 2 : - 6);
+        magicBolts.push({ x: bx, y: player.y + 12, vx: vx, vy: vy, fromBoss: false, life: 90 });
         burst(bx, player.y + 12, '#a78bfa', 6, 3, 18);
         player.shooting = 12;
         player.blastCD = 60;
