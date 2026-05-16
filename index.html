@@ -1026,14 +1026,23 @@
       keys[e.key] = false;
     });
 
-    let mouseX = 0, mouseY = 0, mouseDown = false;
-    canvas.addEventListener('mousemove', e => {
+    let mouseX = W / 2, mouseY = H / 2, mouseDown = false, useMouseAim = false;
+    function updateMousePos(e) {
       const rect = canvas.getBoundingClientRect();
-      mouseX = (e.clientX - rect.left) / (rect.width / W);
-      mouseY = (e.clientY - rect.top) / (rect.height / H);
+      if (rect.width > 0 && rect.height > 0) {
+        mouseX = (e.clientX - rect.left) / (rect.width / W);
+        mouseY = (e.clientY - rect.top) / (rect.height / H);
+        useMouseAim = true;
+      }
+    }
+    window.addEventListener('mousemove', updateMousePos);
+    window.addEventListener('mousedown', e => { 
+      if (e.button === 0) { 
+        mouseDown = true; 
+        updateMousePos(e); 
+      } 
     });
-    canvas.addEventListener('mousedown', e => { if (e.button === 0) mouseDown = true; });
-    canvas.addEventListener('mouseup', e => { if (e.button === 0) mouseDown = false; });
+    window.addEventListener('mouseup', e => { if (e.button === 0) mouseDown = false; });
 
     // ── THEMES ──────────────────────────────────────────────────────────────────
     const T = {
@@ -1476,7 +1485,8 @@
         let vx = player.facing * 6;
         let vy = -0.3;
         
-        if (LEVELS[cLvl].boss) {
+        // Aim with mouse if fighting boss and mouse has been used
+        if (LEVELS[cLvl].boss && useMouseAim) {
           const px = player.x + 8;
           const py = player.y + 16;
           const dx = mouseX - px;
