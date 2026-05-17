@@ -940,7 +940,7 @@
 
     #lbbtn {
       position: fixed;
-      top: 36px;
+      top: 44px;
       right: 8px;
       z-index: 200;
       background: #1a1000;
@@ -1608,7 +1608,25 @@
       submitScoreToCloud(score);
     }
 
+    function saveLocalScore(username, finalScore, character) {
+      try {
+        const scores = JSON.parse(localStorage.getItem('the_gifted_local_scores') || '[]');
+        scores.push({
+          username: username || 'Hero',
+          score: finalScore,
+          character: character || 'Unknown',
+          ts: Date.now()
+        });
+        scores.sort((a, b) => b.score - a.score);
+        if (scores.length > 10) scores.length = 10;
+        localStorage.setItem('the_gifted_local_scores', JSON.stringify(scores));
+      } catch (e) {
+        console.error('Failed to save local score:', e);
+      }
+    }
+
     async function submitScoreToCloud(finalScore) {
+      saveLocalScore(globalUsername || 'Hero', finalScore, selectedChar ? selectedChar.name : 'Unknown');
       if (!fbReady) return;
       try {
         const fn = fbFunctions.httpsCallable('submitScore');
@@ -3261,20 +3279,49 @@
       }
     }
 
+    function loadLocalLeaderboard() {
+      const tbl = document.getElementById('lbtable');
+      if (!tbl) return;
+      try {
+        const entries = JSON.parse(localStorage.getItem('the_gifted_local_scores') || '[]');
+        if (!entries || !entries.length) {
+          tbl.innerHTML = `
+            <div class="lbload">
+              <div style="margin-bottom: 12px; color: #f59e0b; font-weight: bold;">🏆 LOCAL HIGH SCORES</div>
+              No scores yet!<br>Complete a run to set your first high score.
+            </div>`;
+          return;
+        }
+        const medals = ['🥇', '🥈', '🥉'];
+        tbl.innerHTML = `
+          <div style="text-align: center; font-size: 11px; color: #a78bfa; margin-bottom: 8px; border-bottom: 1px dashed #3b0764; padding-bottom: 4px; font-weight: bold;">🏆 LOCAL HIGH SCORES</div>
+          ` + entries.map((e, i) => `
+          <div class="lbrow">
+            <span class="lbrank${i < 3 ? ' top3' : ''}">${medals[i] || (i + 1)}</span>
+            <span class="lbname" title="${escHtml(e.character)}">${escHtml(e.username)}</span>
+            <span class="lbscore">${e.score.toLocaleString()}</span>
+          </div>`).join('');
+      } catch (e) {
+        tbl.innerHTML = '<div class="lbload">Failed to load local scores.</div>';
+      }
+    }
+
     async function loadLeaderboard() {
       const tbl = document.getElementById('lbtable');
       if (!tbl) return;
       if (!fbReady) {
-        // Wait up to 3s for Firebase to become ready, then show offline notice
-        await new Promise(r => setTimeout(r, 1500));
-        if (!fbReady) { tbl.innerHTML = '<div class="lbload">⚠️ Firebase not configured yet.<br>Add your config keys to see global scores.</div>'; return; }
+        loadLocalLeaderboard();
+        return;
       }
       tbl.innerHTML = '<div class="lbload">Loading scores...</div>';
       try {
         const fn = fbFunctions.httpsCallable('getLeaderboard');
         const result = await fn();
         const entries = result.data;
-        if (!entries || !entries.length) { tbl.innerHTML = '<div class="lbload">No scores yet — be the first to finish!</div>'; return; }
+        if (!entries || !entries.length) {
+          loadLocalLeaderboard();
+          return;
+        }
         const medals = ['🥇', '🥈', '🥉'];
         tbl.innerHTML = entries.map((e, i) => `
           <div class="lbrow${e.uid === currentUID ? ' me' : ''}">
@@ -3283,7 +3330,7 @@
             <span class="lbscore">${e.score.toLocaleString()}</span>
           </div>`).join('');
       } catch (e) {
-        tbl.innerHTML = '<div class="lbload">Failed to load. Check your connection.</div>';
+        loadLocalLeaderboard();
       }
     }
 
