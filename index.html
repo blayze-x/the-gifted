@@ -839,6 +839,125 @@
       margin: 4px 0;
     }
 
+    /* ── LEADERBOARD PANEL ─────────────────────────── */
+    #lbpanel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 280px;
+      height: 100%;
+      background: rgba(6, 0, 20, 0.97);
+      border-left: 1px solid #7c3aed;
+      z-index: 120;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      gap: 10px;
+      overflow: hidden;
+    }
+
+    #lbpanel.open {
+      transform: translateX(0);
+    }
+
+    #lbpanel h2 {
+      color: #fbbf24;
+      font-size: 13px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      border-bottom: 1px solid #3b0764;
+      padding-bottom: 8px;
+      margin: 0;
+    }
+
+    #lbtable {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    #lbtable::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    #lbtable::-webkit-scrollbar-thumb {
+      background: #3b0764;
+      border-radius: 2px;
+    }
+
+    .lbrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #0a0018;
+      border: 1px solid #2e1065;
+      border-radius: 6px;
+      padding: 7px 10px;
+      font-size: 11px;
+    }
+
+    .lbrow.me {
+      border-color: #7c3aed;
+      background: #130030;
+    }
+
+    .lbrow .lbrank {
+      color: #6b7280;
+      width: 18px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .lbrow .lbrank.top3 {
+      color: #fbbf24;
+      font-weight: bold;
+    }
+
+    .lbrow .lbname {
+      color: #e9d5ff;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .lbrow .lbscore {
+      color: #a78bfa;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    .lbload {
+      color: #4b5563;
+      font-size: 11px;
+      text-align: center;
+      padding: 20px;
+    }
+
+    #lbbtn {
+      position: fixed;
+      top: 36px;
+      right: 8px;
+      z-index: 200;
+      background: #1a1000;
+      border: 1px solid #fbbf24;
+      color: #fbbf24;
+      font-size: 11px;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 1px;
+    }
+
+    #lbbtn:hover {
+      background: #2a1a00;
+    }
+
     #introbtn {
       background: #2e1065;
       border: 2px solid #7c3aed;
@@ -873,6 +992,11 @@
       pointer-events: none;
     }
   </style>
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-functions-compat.js"></script>
 </head>
 
 <body>
@@ -929,6 +1053,14 @@
       <div class="hitem"><span class="label">Score</span><span class="val" id="scoreV">0</span></div>
       <div class="hitem"><span class="label">Dash</span><span class="val" id="dashV" style="color:#4ade80">RDY</span>
       </div>
+    </div>
+    <button id="lbbtn" onclick="toggleLeaderboard()">🏆 SCORES</button>
+    <div id="lbpanel">
+      <h2>🏆 Global Leaderboard</h2>
+      <div id="lbtable">
+        <div class="lbload">Loading scores...</div>
+      </div>
+      <button class="close-btn" style="margin-top:auto" onclick="toggleLeaderboard()">✕ Close</button>
     </div>
 
 
@@ -1207,6 +1339,7 @@
     let crumbleState = {}, portalAngle = 0;
 
     // ── INIT ─────────────────────────────────────────────────────────────────────
+    // initLevel sets _allCoinsCollected correctly after coins are loaded
     function initLevel(i) {
       const lv = LEVELS[i];
       player = {
@@ -1215,6 +1348,8 @@
         invincible: 0, walkT: 0, walkDir: 0, capeT: 0, glowT: 0, jumpBuf: 0, shooting: 0
       };
       coins = lv.coins.map(c => ({ ...c, collected: false, bob: Math.random() * Math.PI * 2 }));
+      // Boss levels have no coins — portal should never open on boss levels
+      _allCoinsCollected = coins.length === 0 ? !lv.boss : false;
       crumbleState = {}; particles = []; magicBolts = []; minions = [];
       trapStates = lv.traps.map(t => ({ ...t, a: t.a || 0, cx: t.x || 0, dir: t.dir || 1 }));
       if (lv.boss) {
@@ -1430,6 +1565,19 @@
         <button style="background:#2e1065;border:2px solid #7c3aed;color:#e9d5ff;padding:8px 24px;border-radius:8px;cursor:pointer;font-family:'Courier New',monospace;margin-top:16px;transition:0.2s;" onmouseover="this.style.background='#5b21b6'" onmouseout="this.style.background='#2e1065'" onclick="location.reload()">Play Again</button>
       `;
       showMsg(endingHtml, 9999);
+      submitScoreToCloud(score);
+    }
+
+    async function submitScoreToCloud(finalScore) {
+      if (!fbReady) return;
+      try {
+        const fn = fbFunctions.httpsCallable('submitScore');
+        await fn({
+          score: finalScore,
+          username: globalUsername || 'Hero',
+          character: selectedChar ? selectedChar.name : 'Unknown'
+        });
+      } catch (e) { /* silently fail — score submission is best-effort */ }
     }
 
     // ── MAGIC BOLTS ──────────────────────────────────────────────────────────────
@@ -1557,7 +1705,10 @@
           sfxCoin();
         }
       }
-      _allCoinsCollected = (uncollected === 0 && coins.length > 0) || (coins.length === 0);
+      // Boss levels have no coins — treat as "all collected" only for non-boss levels
+      _allCoinsCollected = coins.length === 0
+        ? !LEVELS[cLvl].boss   // boss levels: false (no portal); non-boss with 0 coins: true
+        : uncollected === 0;
       const lv = LEVELS[cLvl];
       if (!lv.boss && !levelLocked && _allCoinsCollected) {
         // Portal center is at px+22, py-28 (doorway opening). Use box overlap.
@@ -1586,9 +1737,9 @@
 
     // ── DRAW BACKGROUND ──────────────────────────────────────────────────────────
     // Pre-baked star data – allocated once, never recreated each frame
-    const STAR_DATA = [[40,18,1.2],[115,42,1],[200,12,1.5],[320,38,1],[440,10,1.2],[515,32,1],[630,18,1.5],[695,58,1],[28,72,1],[160,88,1.2],[365,78,1],[570,68,1],[80,130,0.8],[260,50,0.9],[490,140,0.8],[640,100,1]];
-    const TREE_DATA = [[30,420],[90,420],[620,420],[680,420],[355,420]];
-    const LAVA_FLOOR = Array.from({length:5},(_,i)=>i*155);
+    const STAR_DATA = [[40, 18, 1.2], [115, 42, 1], [200, 12, 1.5], [320, 38, 1], [440, 10, 1.2], [515, 32, 1], [630, 18, 1.5], [695, 58, 1], [28, 72, 1], [160, 88, 1.2], [365, 78, 1], [570, 68, 1], [80, 130, 0.8], [260, 50, 0.9], [490, 140, 0.8], [640, 100, 1]];
+    const TREE_DATA = [[30, 420], [90, 420], [620, 420], [680, 420], [355, 420]];
+    const LAVA_FLOOR = Array.from({ length: 5 }, (_, i) => i * 155);
     // Cached offscreen star canvas per theme
     const _starCache = {};
     function getStarCanvas(theme) {
@@ -1596,7 +1747,7 @@
       const oc = document.createElement('canvas'); oc.width = W; oc.height = H;
       const ox = oc.getContext('2d');
       ox.fillStyle = 'rgba(255,255,255,0.6)';
-      for (const [sx,sy,sz] of STAR_DATA) { ox.beginPath(); ox.arc(sx,sy,sz,0,Math.PI*2); ox.fill(); }
+      for (const [sx, sy, sz] of STAR_DATA) { ox.beginPath(); ox.arc(sx, sy, sz, 0, Math.PI * 2); ox.fill(); }
       _starCache[theme] = oc;
       return oc;
     }
@@ -2020,10 +2171,14 @@
         const boxX = labelX - boxW / 2;
         const boxY = labelY - boxH + 2;
 
-        // Dark solid background
+        // Dark solid background — roundRect with polyfill for older browsers
         ctx.fillStyle = 'rgba(2,0,10,0.92)';
         ctx.beginPath();
-        ctx.roundRect(boxX, boxY, boxW, boxH, 5);
+        if (ctx.roundRect) {
+          ctx.roundRect(boxX, boxY, boxW, boxH, 5);
+        } else {
+          ctx.rect(boxX, boxY, boxW, boxH);
+        }
         ctx.fill();
 
         // Glowing border in character color
@@ -2074,6 +2229,7 @@
     // ── MAIN LOOP ────────────────────────────────────────────────────────────────
     let _last = 0, _hudFrame = 0;
     // Cache coin-collected state so every() isn't called in draw path
+    // Boss levels start with coins.length===0 so initialize based on boss flag
     let _allCoinsCollected = false;
     function loop(ts = 0) {
       gFrame++;
@@ -2434,6 +2590,49 @@
     }
 
 
+    // ── FIREBASE INIT ────────────────────────────────────────────────────────────
+    // ⚠️  REPLACE these placeholder values with your real Firebase project config.
+    // Get them: console.firebase.google.com → your project → Project Settings → Your apps
+    const FIREBASE_CONFIG = {
+      apiKey: 'PASTE_apiKey_HERE',
+      authDomain: 'PASTE_authDomain_HERE',
+      projectId: 'PASTE_projectId_HERE',
+      storageBucket: 'PASTE_storageBucket_HERE',
+      messagingSenderId: 'PASTE_messagingSenderId_HERE',
+      appId: 'PASTE_appId_HERE'
+    };
+
+    let db = null, fbAuth = null, fbFunctions = null, currentUID = null, fbReady = false;
+    let fbInitialized = false;
+
+    function initFirebase() {
+      if (fbInitialized) return;
+      fbInitialized = true;
+      if (FIREBASE_CONFIG.apiKey === 'PASTE_apiKey_HERE') {
+        console.warn('[The Gifted] Firebase not configured — using localStorage fallback.');
+        return;
+      }
+      try {
+        firebase.initializeApp(FIREBASE_CONFIG);
+        db = firebase.firestore();
+        fbAuth = firebase.auth();
+        fbFunctions = firebase.functions();
+        db.enablePersistence({ synchronizeTabs: true }).catch(() => { });
+        fbAuth.signInAnonymously()
+          .then(cred => {
+            currentUID = cred.user.uid;
+            fbReady = true;
+            // Check cloud ban status
+            db.collection('bans').doc(currentUID).get().then(snap => {
+              if (snap.exists) localStorage.setItem(BAN_KEY, '1');
+            });
+          })
+          .catch(err => console.warn('[Firebase] Auth failed:', err));
+      } catch (err) {
+        console.warn('[Firebase] Init failed, localStorage fallback active:', err);
+      }
+    }
+
     // ── IDEA / SUGGESTION SYSTEM ─────────────────────────────────────────────────
     const IDEA_KEY = 'the_gifted_ideas';
     const BAN_KEY = 'the_gifted_banned';
@@ -2490,20 +2689,24 @@
       try { return JSON.parse(localStorage.getItem(MY_POST_KEY) || '[]'); }
       catch (e) { return []; }
     }
-    function addMyPost(ts) { const p = getMyPosts(); p.push(ts); localStorage.setItem(MY_POST_KEY, JSON.stringify(p)); }
-    function removeMyPost(ts) { const p = getMyPosts().filter(x => x !== ts); localStorage.setItem(MY_POST_KEY, JSON.stringify(p)); }
-    function isMyPost(ts) { return getMyPosts().includes(ts); }
+    function addMyPost(id) { const p = getMyPosts(); p.push(String(id)); localStorage.setItem(MY_POST_KEY, JSON.stringify(p)); }
+    function removeMyPost(id) { const p = getMyPosts().filter(x => x !== String(id)); localStorage.setItem(MY_POST_KEY, JSON.stringify(p)); }
+    function isMyPost(id) { return getMyPosts().includes(String(id)); }
 
     function toggleIdeas() {
       ideaOpen = !ideaOpen;
       document.getElementById('ideapanel').classList.toggle('open', ideaOpen);
       if (ideaOpen) {
         Object.keys(keys).forEach(k => keys[k] = false);
+        initFirebase(); // ensure Firebase is ready on first open
         loadIdeas();
         setTimeout(() => {
           const ta = document.getElementById('ideatext');
           if (ta && !isBannedUser()) ta.focus();
         }, 300);
+      } else {
+        // Unsubscribe real-time listener when panel closes
+        if (_ideasUnsubscribe) { _ideasUnsubscribe(); _ideasUnsubscribe = null; }
       }
     }
 
@@ -2511,6 +2714,8 @@
       ideaFilter = f;
       document.getElementById('fNewest').className = f === 'newest' ? 'active' : '';
       document.getElementById('fTop').className = f === 'top' ? 'active' : '';
+      // Unsubscribe existing real-time listener before reloading with new sort order
+      if (_ideasUnsubscribe) { _ideasUnsubscribe(); _ideasUnsubscribe = null; }
       loadIdeas();
     }
 
@@ -2520,40 +2725,49 @@
     }
     function saveIdeas(arr) { localStorage.setItem(IDEA_KEY, JSON.stringify(arr)); }
 
+    let _ideasUnsubscribe = null;
+
+    function _applyBanNotice(list) {
+      const reason = localStorage.getItem(BAN_KEY + '_reason') || 'Violated community guidelines';
+      const sub = document.getElementById('submitidea'), ta = document.getElementById('ideatext'), ni = document.getElementById('iname');
+      if (sub) sub.disabled = true;
+      if (ta) { ta.disabled = true; ta.placeholder = 'You are banned from posting.'; }
+      if (ni) ni.disabled = true;
+      return `<div class="banned-notice"><b>🚫 You are banned</b> Reason: ${escHtml(reason)}<br><small>You can still read others' ideas.</small></div>`;
+    }
+
     function loadIdeas() {
       const list = document.getElementById('idealist');
-      const submitBtn = document.getElementById('submitidea');
-      const ta = document.getElementById('ideatext');
-      const ni = document.getElementById('iname');
+      if (!list) return;
+      const banned = isBannedUser();
+      let banHtml = banned ? _applyBanNotice(list) : '';
 
-      // Show ban notice if banned
-      if (isBannedUser()) {
-        const reason = localStorage.getItem(BAN_KEY + '_reason') || 'Violated community guidelines';
-        if (submitBtn) submitBtn.disabled = true;
-        if (ta) { ta.disabled = true; ta.placeholder = 'You are banned from posting.'; }
-        if (ni) ni.disabled = true;
-        list.innerHTML = `<div class="banned-notice">
-      <b>🚫 You are banned</b>
-      Reason: ${escHtml(reason)}<br>
-      <small>Your posts violated our community rules. You can still read others' ideas.</small>
-    </div>`;
-        // Still load ideas below the notice
-        const ideas = getSortedIdeas();
-        if (ideas.length) {
-          list.innerHTML += ideas.map(idea => renderIdeaCard(idea)).join('');
-        }
-        return;
+      if (fbReady) {
+        if (_ideasUnsubscribe) { _ideasUnsubscribe(); _ideasUnsubscribe = null; }
+        list.innerHTML = banHtml + '<div class="ideaload">Loading...</div>';
+        let q = db.collection('ideas');
+        q = ideaFilter === 'top' ? q.orderBy('votes', 'desc').limit(50) : q.orderBy('ts', 'desc').limit(50);
+        _ideasUnsubscribe = q.onSnapshot(snap => {
+          const voted = JSON.parse(localStorage.getItem('the_gifted_voted') || '[]');
+          const myPosts = getMyPosts();
+          const cards = snap.docs.map(doc => {
+            const d = doc.data();
+            return renderIdeaCard({ ...d, _id: doc.id, ts: d.ts?.toMillis?.() || Date.now(), _mine: myPosts.includes(doc.id), _voted: voted.includes(doc.id) });
+          }).join('');
+          list.innerHTML = banHtml + (snap.empty ? '<div class="ideaload">No ideas yet — be the first! 💡</div>' : cards);
+        }, () => _loadIdeasLocal(list, banHtml));
+      } else {
+        _loadIdeasLocal(list, banHtml);
       }
+    }
 
-      list.innerHTML = '<div class="ideaload">Loading...</div>';
-      setTimeout(() => {
-        const ideas = getSortedIdeas();
-        if (!ideas.length) {
-          list.innerHTML = '<div class="ideaload">No ideas yet - be the first! 💡</div>';
-          return;
-        }
-        list.innerHTML = ideas.map(idea => renderIdeaCard(idea)).join('');
-      }, 50);
+    function _loadIdeasLocal(list, banHtml = '') {
+      const ideas = getSortedIdeas();
+      const voted = JSON.parse(localStorage.getItem('the_gifted_voted') || '[]');
+      const myPosts = getMyPosts();
+      list.innerHTML = banHtml + (ideas.length
+        ? ideas.map(idea => renderIdeaCard({ ...idea, _id: String(idea.ts), _mine: myPosts.includes(String(idea.ts)), _voted: voted.includes(idea.ts) })).join('')
+        : '<div class="ideaload">No ideas yet — be the first! 💡</div>');
     }
 
     function getSortedIdeas() {
@@ -2564,18 +2778,19 @@
     }
 
     function renderIdeaCard(idea) {
-      const ago = timeAgo(idea.ts);
+      const id = idea._id || String(idea.ts);
+      const ago = timeAgo(typeof idea.ts === 'number' ? idea.ts : Date.now());
       const name = escHtml(idea.name || 'Anonymous');
-      const mine = isMyPost(idea.ts);
-      const voted = (JSON.parse(localStorage.getItem('the_gifted_voted') || '[]')).includes(idea.ts);
-      const delBtn = mine ? `<button class="idel" onclick="deleteIdea(${idea.ts})">🗑 Delete</button>` : '';
+      const mine = idea._mine !== undefined ? idea._mine : isMyPost(id);
+      const voted = idea._voted !== undefined ? idea._voted : (JSON.parse(localStorage.getItem('the_gifted_voted') || '[]')).includes(id);
+      const delBtn = mine ? `<button class="idel" onclick="deleteIdea('${id}')">🗑 Delete</button>` : '';
       const voteStyle = voted ? 'opacity:0.5;cursor:default' : '';
-      return `<div class="ideacard" id="ic${idea.ts}">
+      return `<div class="ideacard" id="ic${id}">
     ${escHtml(idea.text)}
     <div class="imeta">
       <span>👤 ${name}${mine ? ' <span style="color:#4ade80">(you)</span>' : ''} · ${ago}</span>
       <span>
-        <button class="ivote" style="${voteStyle}" onclick="voteIdea(${idea.ts})">▲ ${idea.votes || 0}</button>
+        <button class="ivote" style="${voteStyle}" onclick="voteIdea('${id}')">▲ ${idea.votes || 0}</button>
         ${delBtn}
       </span>
     </div>
@@ -2594,56 +2809,73 @@
       return Math.floor(s / 86400) + 'd ago';
     }
 
-    function submitIdea() {
+    async function submitIdea() {
       if (isBannedUser()) { showToast('🚫 You are banned from posting.', '#f87171'); return; }
       const ta = document.getElementById('ideatext');
       const text = ta.value.trim();
       const name = document.getElementById('iname').value.trim();
       if (!text || text.length < 3) {
         ta.placeholder = 'Please write your idea here first! ✏️';
-        ta.style.borderColor = '#f87171';
-        ta.focus();
+        ta.style.borderColor = '#f87171'; ta.focus();
         setTimeout(() => { ta.style.borderColor = '#166534'; ta.placeholder = 'Suggest something for the game...'; }, 2500);
         return;
       }
-      // Check for banned content
       if (checkContent(text) || checkContent(name)) {
-        banUser('Posted inappropriate content (NSFW, hate speech, or grooming language)');
-        ta.value = '';
-        showToast('🚫 Banned for inappropriate content.', '#dc2626');
-        loadIdeas();
-        return;
+        banUser('Posted inappropriate content');
+        if (fbReady) db.collection('bans').doc(currentUID).set({ reason: 'Inappropriate content', ts: firebase.firestore.FieldValue.serverTimestamp() });
+        ta.value = ''; showToast('🚫 Banned for inappropriate content.', '#dc2626'); loadIdeas(); return;
       }
-      const ideas = getIdeas();
-      if (ideas.length >= 100) ideas.sort((a, b) => a.ts - b.ts).splice(0, ideas.length - 99);
-      const ts = Date.now();
-      ideas.push({ text, name: name || 'Anonymous', ts, votes: 0 });
-      saveIdeas(ideas);
-      addMyPost(ts);
-      ta.value = '';
-      showToast('💡 Idea submitted! Thanks!', '#4ade80');
-      loadIdeas();
+      const btn = document.getElementById('submitidea');
+      if (btn) btn.disabled = true;
+      if (fbReady) {
+        try {
+          const ref = await db.collection('ideas').add({
+            text, name: name || 'Anonymous', uid: currentUID,
+            ts: firebase.firestore.FieldValue.serverTimestamp(), votes: 0
+          });
+          addMyPost(ref.id); ta.value = '';
+          showToast('💡 Idea submitted! Thanks!', '#4ade80');
+        } catch (e) { showToast('Failed to submit. Try again.', '#f87171'); }
+      } else {
+        const ideas = getIdeas();
+        if (ideas.length >= 100) ideas.sort((a, b) => a.ts - b.ts).splice(0, ideas.length - 99);
+        const ts = Date.now();
+        ideas.push({ text, name: name || 'Anonymous', ts, votes: 0 });
+        saveIdeas(ideas); addMyPost(String(ts)); ta.value = '';
+        showToast('💡 Idea submitted! (local only — set up Firebase to share)', '#4ade80');
+        loadIdeas();
+      }
+      if (btn) btn.disabled = false;
     }
 
-    function deleteIdea(ts) {
-      if (!isMyPost(ts)) { showToast("You can only delete your own posts.", '#f87171'); return; }
-      const ideas = getIdeas().filter(x => x.ts !== ts);
-      saveIdeas(ideas);
-      removeMyPost(ts);
-      const card = document.getElementById('ic' + ts);
-      if (card) { card.style.opacity = '0'; card.style.transition = 'opacity 0.3s'; setTimeout(() => card.remove(), 300); }
+    async function deleteIdea(id) {
+      const myPosts = getMyPosts();
+      if (!myPosts.includes(id)) { showToast('You can only delete your own posts.', '#f87171'); return; }
+      if (fbReady) {
+        await db.collection('ideas').doc(id).delete();
+        removeMyPost(id);
+      } else {
+        const ideas = getIdeas().filter(x => String(x.ts) !== id);
+        saveIdeas(ideas); removeMyPost(id);
+        const card = document.getElementById('ic' + id);
+        if (card) { card.style.opacity = '0'; card.style.transition = 'opacity 0.3s'; setTimeout(() => card.remove(), 300); }
+        loadIdeas();
+      }
       showToast('🗑 Post deleted.', '#a78bfa');
     }
 
-    function voteIdea(ts) {
+    async function voteIdea(id) {
       const voted = JSON.parse(localStorage.getItem('the_gifted_voted') || '[]');
-      if (voted.includes(ts)) { showToast('Already voted!', '#f87171'); return; }
-      const ideas = getIdeas();
-      const idx = ideas.findIndex(x => x.ts === ts);
-      if (idx >= 0) { ideas[idx].votes = (ideas[idx].votes || 0) + 1; saveIdeas(ideas); }
-      voted.push(ts); localStorage.setItem('the_gifted_voted', JSON.stringify(voted));
+      if (voted.includes(id)) { showToast('Already voted!', '#f87171'); return; }
+      if (fbReady) {
+        await db.collection('ideas').doc(id).update({ votes: firebase.firestore.FieldValue.increment(1) });
+      } else {
+        const ideas = getIdeas(); const idx = ideas.findIndex(x => String(x.ts) === id);
+        if (idx >= 0) { ideas[idx].votes = (ideas[idx].votes || 0) + 1; saveIdeas(ideas); }
+        loadIdeas();
+      }
+      voted.push(id); localStorage.setItem('the_gifted_voted', JSON.stringify(voted));
       showToast('▲ Voted!', '#4ade80');
-      loadIdeas();
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -2977,6 +3209,43 @@
     });
 
     // buildCharSelect called from showCharSelect()
+
+    // ── LEADERBOARD UI ───────────────────────────────────────────────────────────
+    let lbOpen = false;
+    function toggleLeaderboard() {
+      lbOpen = !lbOpen;
+      document.getElementById('lbpanel').classList.toggle('open', lbOpen);
+      if (lbOpen) {
+        initFirebase();
+        loadLeaderboard();
+      }
+    }
+
+    async function loadLeaderboard() {
+      const tbl = document.getElementById('lbtable');
+      if (!tbl) return;
+      if (!fbReady) {
+        // Wait up to 3s for Firebase to become ready, then show offline notice
+        await new Promise(r => setTimeout(r, 1500));
+        if (!fbReady) { tbl.innerHTML = '<div class="lbload">⚠️ Firebase not configured yet.<br>Add your config keys to see global scores.</div>'; return; }
+      }
+      tbl.innerHTML = '<div class="lbload">Loading scores...</div>';
+      try {
+        const fn = fbFunctions.httpsCallable('getLeaderboard');
+        const result = await fn();
+        const entries = result.data;
+        if (!entries || !entries.length) { tbl.innerHTML = '<div class="lbload">No scores yet — be the first to finish!</div>'; return; }
+        const medals = ['🥇', '🥈', '🥉'];
+        tbl.innerHTML = entries.map((e, i) => `
+          <div class="lbrow${e.uid === currentUID ? ' me' : ''}">
+            <span class="lbrank${i < 3 ? ' top3' : ''}">${medals[i] || (i + 1)}</span>
+            <span class="lbname" title="${escHtml(e.character)}">${escHtml(e.username)}</span>
+            <span class="lbscore">${e.score.toLocaleString()}</span>
+          </div>`).join('');
+      } catch (e) {
+        tbl.innerHTML = '<div class="lbload">Failed to load. Check your connection.</div>';
+      }
+    }
 
   </script>
 </body>
