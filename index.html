@@ -1141,6 +1141,13 @@
         </select>
       </div>
       <div class="srow">
+        <label>🎨 Background</label>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <input type="color" id="bgColorPicker" value="#060010" onchange="setCustomBgColor(this.value)" style="border: 2px solid #7c3aed; background: transparent; cursor: pointer; border-radius: 4px; width: 44px; height: 30px; padding: 0;">
+          <button onclick="resetBgColor()" style="background: #2e1065; border: 1.5px solid #7c3aed; color: #e9d5ff; font-family: 'Courier New', monospace; font-size: 11px; padding: 4px 8px; border-radius: 4px; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#5b21b6'" onmouseout="this.style.background='#2e1065'">Reset</button>
+        </div>
+      </div>
+      <div class="srow">
         <label>💾 Save Progress</label>
         <div id="slot0" class="save-slot">Empty Slot 1</div>
         <div id="slot1" class="save-slot">Empty Slot 2</div>
@@ -1450,6 +1457,7 @@
       document.getElementById('stageName').textContent = lv.name;
       if (musicStarted) { if (lv.boss) startMusic('boss'); else startMusic(cLvl >= 10 ? 'void' : cLvl >= 5 ? 'forest' : 'dungeon'); }
       updateHUD();
+      syncColorPicker();
     }
 
     function updateHUD() {
@@ -1857,9 +1865,31 @@
       _forestCache = oc;
       return oc;
     }
+    // Custom background color customization
+    let customBgColor = localStorage.getItem('customBgColor') || null;
+
+    function setCustomBgColor(color) {
+      customBgColor = color;
+      localStorage.setItem('customBgColor', color);
+    }
+
+    function resetBgColor() {
+      customBgColor = null;
+      localStorage.removeItem('customBgColor');
+      syncColorPicker();
+    }
+
+    function syncColorPicker() {
+      const th = T[LEVELS[cLvl].theme];
+      const picker = document.getElementById('bgColorPicker');
+      if (picker) {
+        picker.value = customBgColor || th.sky;
+      }
+    }
+
     function drawBg() {
       const th = T[LEVELS[cLvl].theme];
-      ctx.fillStyle = th.sky; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = customBgColor || th.sky; ctx.fillRect(0, 0, W, H);
       if (th.star) {
         ctx.drawImage(getStarCanvas(LEVELS[cLvl].theme), 0, 0);
       }
@@ -2761,7 +2791,10 @@
     const _origToggle = window.toggleSettings;
     window.toggleSettings = function () {
       document.getElementById('settings').classList.toggle('open');
-      if (document.getElementById('settings').classList.contains('open')) refreshSlotUI();
+      if (document.getElementById('settings').classList.contains('open')) {
+        refreshSlotUI();
+        syncColorPicker();
+      }
     };
 
     // Auto-save on level complete (slot 0 silently)
