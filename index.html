@@ -1729,7 +1729,7 @@
       }
 
       if (jP && !lastJump && (player.onGround || player.jumpBuf > 0)) {
-        player.vy = -12.5; player.onGround = false; player.jumpBuf = 0;
+        player.vy = -11.5; player.onGround = false; player.jumpBuf = 0;
         burst(player.x + 8, player.y + player.h, '#c4b5fd', 6, 3, 16, 2);
         sfxJump();
       }
@@ -1759,7 +1759,7 @@
         sfxBlast();
       }
 
-      player.vy += 0.52;
+      player.vy += 0.47;
       player.x += player.vx; player.y += player.vy;
       player.x = Math.max(0, Math.min(W - player.w, player.x));
 
