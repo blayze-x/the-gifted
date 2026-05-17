@@ -1331,6 +1331,46 @@
         traps: [spike(150, 35), spike(370, 35), spike(570, 35), pendulum(360, 55, 140, 0.03, 0), fireball(140, 358, 2.5, 240), sawblade(490, 358, 3, 200)],
         sx: 40, sy: 340, px: 640, py: 340
       },
+      // 16
+      {
+        name: 'Abyssal Descent', theme: 'void', boss: false,
+        plats: [mk(0, 390, 60), mk(100, 350, 50, true), mk(200, 310, 50, true), mk(300, 270, 50, true), mk(400, 230, 50, true), mk(500, 190, 50, true), mk(600, 150, 50, true), mk(670, 110, 50)],
+        coins: [coin(125, 325), coin(225, 285), coin(325, 245), coin(425, 205), coin(525, 165), coin(625, 125)],
+        traps: [spike(70, 30), spike(270, 30), spike(470, 30), sawblade(250, 280, 4.5, 200), fireball(450, 200, 4.5, 200)],
+        sx: 10, sy: 360, px: 685, py: 122
+      },
+      // 17
+      {
+        name: 'Gauntlet of Fire', theme: 'lava', boss: false,
+        plats: [mk(0, 390, 100), mk(160, 340, 80), mk(300, 290, 80), mk(440, 240, 80), mk(580, 190, 100), mk(440, 140, 80), mk(300, 90, 80), mk(160, 50, 80), mk(30, 20, 80)],
+        coins: [coin(200, 315), coin(340, 265), coin(480, 215), coin(620, 165), coin(480, 115), coin(340, 65), coin(200, 25)],
+        traps: [spike(110, 40), spike(390, 40), pendulum(230, 140, 110, 0.045, 0), pendulum(510, 90, 110, 0.045, Math.PI), fireball(340, 265, 3.8, 180), fireball(480, 165, 3.8, 180), fireball(250, 60, 4, 200)],
+        sx: 30, sy: 360, px: 60, py: 32
+      },
+      // 18
+      {
+        name: 'Crystal Maze', theme: 'crystal', boss: false,
+        plats: [mk(0, 390, 60), mk(80, 340, 60), mk(160, 290, 60), mk(240, 240, 60), mk(320, 190, 60), mk(400, 140, 60), mk(480, 90, 60), mk(560, 140, 60), mk(640, 190, 60)],
+        coins: [coin(110, 315), coin(190, 265), coin(270, 215), coin(350, 165), coin(430, 115), coin(510, 65), coin(590, 115), coin(670, 165)],
+        traps: [spike(65, 10), spike(145, 10), spike(225, 10), spike(305, 10), spike(385, 10), spike(465, 10), spike(545, 10), spike(625, 10), sawblade(200, 265, 5, 150), sawblade(360, 165, 5, 150), sawblade(520, 115, 5, 150)],
+        sx: 20, sy: 360, px: 660, py: 202
+      },
+      // 19
+      {
+        name: 'Death Run III', theme: 'void', boss: false,
+        plats: [mk(0, 390, 40), mk(70, 360, 40, true), mk(140, 330, 40, true), mk(210, 300, 40, true), mk(280, 270, 40, true), mk(350, 240, 40, true), mk(420, 210, 40, true), mk(490, 180, 40, true), mk(560, 150, 40, true), mk(630, 120, 50)],
+        coins: [coin(90, 335), coin(160, 305), coin(230, 275), coin(300, 245), coin(370, 215), coin(440, 185), coin(510, 155), coin(580, 125), coin(650, 95)],
+        traps: [spike(45, 20), spike(115, 20), spike(185, 20), spike(255, 20), spike(325, 20), spike(395, 20), spike(465, 20), spike(535, 20), spike(605, 20), pendulum(180, 200, 80, 0.06, 0), pendulum(390, 140, 80, 0.065, 1), pendulum(530, 90, 80, 0.06, -1), fireball(250, 280, 5, 250), sawblade(450, 195, 5, 200)],
+        sx: 10, sy: 360, px: 645, py: 132
+      },
+      // 20 - TRUE FINAL BOSS
+      {
+        name: 'Boss: The Behemoth', theme: 'void', boss: true, bossName: 'THE BEHEMOTH', bossHp: 600,
+        plats: [mk(0, 390, 720), mk(0, 210, 100), mk(620, 210, 100), mk(210, 145, 300), mk(60, 85, 80), mk(580, 85, 80)],
+        coins: [],
+        traps: [spike(120, 40), spike(360, 40), spike(560, 40), pendulum(360, 40, 150, 0.035, 0), fireball(100, 358, 3, 260), sawblade(520, 358, 3.5, 200), fireball(360, 120, 4, 200)],
+        sx: 40, sy: 340, px: 640, py: 340
+      },
     ];
 
     // ── STATE ────────────────────────────────────────────────────────────────────
@@ -1358,8 +1398,8 @@
           onGround: false, shootT: 0, jumpT: 20, phase: 0, angry: false,
           swingT: 0, charge: false, chargeT: 0
         };
-        // Spawn 5 minions for final boss (level index 14)
-        if (i === 14) {
+        // Spawn 5 minions for final boss (level index 14) and true final boss (level index 19)
+        if (i === 14 || i === 19) {
           minions = [];
           const mxPos = [80, 180, 300, 450, 580];
           for (let m = 0; m < 5; m++) {
@@ -1381,7 +1421,7 @@
     }
 
     function updateHUD() {
-      document.getElementById('lvlV').textContent = (cLvl + 1) + '/15';
+      document.getElementById('lvlV').textContent = (cLvl + 1) + '/' + LEVELS.length;
       const done = coins.filter(c => c.collected).length;
       document.getElementById('coinV').textContent = done + '/' + coins.length;
       document.getElementById('hpV').textContent = Math.max(0, player.hp);
@@ -1488,7 +1528,7 @@
           if (magicBolts.length < 20) magicBolts.push({ x: m.x + 10, y: m.y + 10, vx: dx / dist * 3, vy: dy / dist * 3, fromBoss: true, life: 160 });
         }
         // Hurt player on contact
-        if (overlap(player.x, player.y, player.w, player.h, m.x, m.y, m.w, m.h)) hurtPlayer(10);
+        if (overlap(player.x, player.y, player.w, player.h, m.x, m.y, m.w, m.h)) hurtPlayer(1);
         // Check if hit by player bolt
         for (let b = magicBolts.length - 1; b >= 0; b--) {
           const bolt = magicBolts[b];
@@ -1547,7 +1587,7 @@
           if (magicBolts.length < 20) magicBolts.push({ x: boss.x + 20, y: boss.y + 28, vx: dx / dist * spd2 + spread, vy: dy / dist * spd2, fromBoss: true, life: 200 });
         }
       }
-      if (overlap(player.x, player.y, player.w, player.h, boss.x, boss.y, boss.w, boss.h)) hurtPlayer(5);
+      if (overlap(player.x, player.y, player.w, player.h, boss.x, boss.y, boss.w, boss.h)) hurtPlayer(6);
       if (boss.y > H + 80) { boss.y = 50; boss.vy = 0; }
     }
 
@@ -1598,12 +1638,12 @@
             levelLocked = true;
             const nextAfterBoss = cLvl + 1;
             showMsg('<span class="title">BOSS DEFEATED!</span>+300 bonus!<span class="sub">Loading next level...</span>', 130);
-            setTimeout(() => { if (nextAfterBoss <= 14) { cLvl = nextAfterBoss; initLevel(cLvl); levelLocked = false; autoSave(); } else { showEndingSequence(); } }, 2200);
+            setTimeout(() => { if (nextAfterBoss < LEVELS.length) { cLvl = nextAfterBoss; initLevel(cLvl); levelLocked = false; autoSave(); } else { showEndingSequence(); } }, 2200);
           }
           continue;
         }
         if (b.fromBoss && overlap(b.x - 5, b.y - 5, 10, 10, player.x, player.y, player.w, player.h)) {
-          hurtPlayer(5); magicBolts.splice(i, 1);
+          hurtPlayer(6); magicBolts.splice(i, 1);
         }
       }
     }
@@ -1720,7 +1760,7 @@
           const nextLvl = cLvl + 1;
           showMsg('<span class="title">Level ' + (cLvl + 1) + ' Clear!</span>+60 bonus!<span class="sub">Loading next level...</span>', 115);
           setTimeout(() => {
-            if (nextLvl <= 14) { cLvl = nextLvl; initLevel(cLvl); levelLocked = false; autoSave(); }
+            if (nextLvl < LEVELS.length) { cLvl = nextLvl; initLevel(cLvl); levelLocked = false; autoSave(); }
             else { showMsg('<span class="title">YOU WIN!</span>Final Score: ' + score, 9999); }
           }, 2000);
         }
