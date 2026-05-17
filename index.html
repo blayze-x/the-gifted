@@ -1507,12 +1507,12 @@
       const lv = LEVELS[cLvl];
       for (const t of trapStates) {
         if (t.type === 'pendulum') {
-          t.a += t.spd;
+          t.a += t.spd * 2.0;
           const bx = t.x + Math.sin(t.a) * t.len, by = t.y + Math.cos(t.a) * t.len;
           if (overlap(player.x, player.y, player.w, player.h, bx - 9, by - 9, 18, 18)) hurtPlayer(20);
         }
         if (t.type === 'fireball' || t.type === 'saw') {
-          t.cx += t.dir * (t.vx || 2.5);
+          t.cx += t.dir * (t.vx || 2.5) * 2.0;
           if (t.cx > t.startX + t.range || t.cx < t.startX) t.dir *= -1;
           if (overlap(player.x, player.y, player.w, player.h, t.cx - 9, t.y - 9, 18, 18)) hurtPlayer(t.type === 'saw' ? 25 : 15);
         }
@@ -1715,28 +1715,28 @@
 
       if (player.dashing) {
         player.dashT--;
-        player.vx = player.facing * 7.0;
+        player.vx = player.facing * 13.0;
         if (gFrame % 2 === 0) addP(player.x + 8, player.y + 16, '#38bdf8', -player.facing * (1 + Math.random() * 2), (Math.random() - 0.5) * 1.5, 14, 3);
         if (player.dashT <= 0) { player.dashing = false; player.vx = 0; player.walkDir = 0; }
       } else {
-        if (lP) { player.vx = -2.2; player.facing = -1; player.walkT += 0.18; player.walkDir = -1; }
-        else if (rP) { player.vx = 2.2; player.facing = 1; player.walkT += 0.18; player.walkDir = 1; }
+        if (lP) { player.vx = -4.5; player.facing = -1; player.walkT += 0.36; player.walkDir = -1; }
+        else if (rP) { player.vx = 4.5; player.facing = 1; player.walkT += 0.36; player.walkDir = 1; }
         else { player.vx *= 0.68; if (Math.abs(player.vx) < 0.05) player.vx = 0; player.walkDir = 0; }
         if (shP && !lastSh && player.dashCD <= 0) {
-          player.dashing = true; player.dashT = 13; player.dashCD = 110;
+          player.dashing = true; player.dashT = 12; player.dashCD = 50;
           for (let i = 0; i < 6; i++) addP(player.x + 8, player.y + 16, '#38bdf8', -player.facing * (1 + Math.random() * 3), (Math.random() - 0.5) * 4, 18);
         }
       }
 
       if (jP && !lastJump && (player.onGround || player.jumpBuf > 0)) {
-        player.vy = -11.5; player.onGround = false; player.jumpBuf = 0;
+        player.vy = -12.5; player.onGround = false; player.jumpBuf = 0;
         burst(player.x + 8, player.y + player.h, '#c4b5fd', 6, 3, 16, 2);
         sfxJump();
       }
       if (player.jumpBuf > 0) player.jumpBuf--;
 
       if (zP && !lastZ && player.blastCD <= 0) {
-        let vx = player.facing * 6;
+        let vx = player.facing * 12;
         let vy = -0.3;
 
         // Always aim with mouse when the mouse has been moved
@@ -1746,20 +1746,20 @@
           const dx = mouseX - px;
           const dy = mouseY - py;
           const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-          vx = (dx / dist) * 6.5;
-          vy = (dy / dist) * 6.5;
+          vx = (dx / dist) * 12.5;
+          vy = (dy / dist) * 12.5;
           if (Math.abs(dx) > 0.1) player.facing = dx > 0 ? 1 : -1;
         }
 
         const bx = player.x + (vx > 0 ? player.w + 2 : - 6);
-        magicBolts.push({ x: bx, y: player.y + 12, vx: vx, vy: vy, fromBoss: false, life: 90 });
+        magicBolts.push({ x: bx, y: player.y + 12, vx: vx, vy: vy, fromBoss: false, life: 60 });
         burst(bx, player.y + 12, '#a78bfa', 6, 3, 18);
         player.shooting = 12;
-        player.blastCD = 60;
+        player.blastCD = 40;
         sfxBlast();
       }
 
-      player.vy += 0.47;
+      player.vy += 0.52;
       player.x += player.vx; player.y += player.vy;
       player.x = Math.max(0, Math.min(W - player.w, player.x));
 
