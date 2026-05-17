@@ -4,6 +4,9 @@
 <head>
   <meta charset="UTF-8">
   <title>The Gifted</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -17,7 +20,7 @@
       height: 100%;
       overflow: hidden;
       background: #060010;
-      font-family: 'Courier New', monospace;
+      font-family: 'Outfit', sans-serif;
     }
 
     body {
@@ -41,10 +44,15 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: #0a0018;
-      border-bottom: 1px solid #3b0764;
-      padding: 6px 16px;
-      color: #e9d5ff;
+      background: rgba(10, 0, 24, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(124, 58, 237, 0.25);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      margin: 8px 16px 2px 16px;
+      padding: 8px 18px;
+      color: #f3e8ff;
       font-size: 13px;
       letter-spacing: 0.5px;
       flex-shrink: 0;
@@ -55,16 +63,19 @@
       display: flex;
       align-items: center;
       gap: 6px;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 500;
     }
 
     #hud .label {
-      color: #6b21a8;
-      font-size: 10px;
+      color: #a78bfa;
+      font-size: 9px;
       text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
     #hud .val {
-      color: #e9d5ff;
+      color: #ffffff;
       font-weight: bold;
     }
 
@@ -266,19 +277,26 @@
       top: 8px;
       right: 8px;
       z-index: 200;
-      background: #2e1065;
+      background: rgba(46, 16, 101, 0.85);
+      backdrop-filter: blur(8px);
       border: 1px solid #7c3aed;
-      color: #a78bfa;
+      box-shadow: 0 0 10px rgba(124, 58, 237, 0.3);
+      color: #d8b4fe;
       font-size: 11px;
-      padding: 5px 10px;
+      padding: 6px 12px;
       cursor: pointer;
-      border-radius: 4px;
-      font-family: 'Courier New', monospace;
+      border-radius: 6px;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
       letter-spacing: 1px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     #settoggle:hover {
-      background: #4c1d95;
+      background: #7c3aed;
+      color: #ffffff;
+      box-shadow: 0 0 15px rgba(124, 58, 237, 0.8);
+      transform: translateY(-1px) scale(1.03);
     }
 
     #settings .close-btn {
@@ -418,19 +436,26 @@
       top: 8px;
       left: 8px;
       z-index: 200;
-      background: #1a3a00;
+      background: rgba(26, 58, 0, 0.85);
+      backdrop-filter: blur(8px);
       border: 1px solid #4ade80;
+      box-shadow: 0 0 10px rgba(74, 222, 128, 0.3);
       color: #4ade80;
-      font-size: 13px;
-      padding: 5px 10px;
+      font-size: 11px;
+      padding: 6px 12px;
       cursor: pointer;
-      border-radius: 4px;
-      font-family: 'Courier New', monospace;
+      border-radius: 6px;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
       letter-spacing: 1px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     #ideabtn:hover {
-      background: #14532d;
+      background: #4ade80;
+      color: #064e3b;
+      box-shadow: 0 0 15px rgba(74, 222, 128, 0.8);
+      transform: translateY(-1px) scale(1.03);
     }
 
     #ideapanel {
@@ -943,19 +968,26 @@
       top: 44px;
       right: 8px;
       z-index: 200;
-      background: #1a1000;
+      background: rgba(26, 16, 0, 0.85);
+      backdrop-filter: blur(8px);
       border: 1px solid #fbbf24;
-      color: #fbbf24;
+      box-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
+      color: #fde047;
       font-size: 11px;
-      padding: 5px 10px;
+      padding: 6px 12px;
       cursor: pointer;
-      border-radius: 4px;
-      font-family: 'Courier New', monospace;
+      border-radius: 6px;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
       letter-spacing: 1px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     #lbbtn:hover {
-      background: #2a1a00;
+      background: #fbbf24;
+      color: #1e1b4b;
+      box-shadow: 0 0 15px rgba(251, 191, 36, 0.8);
+      transform: translateY(-1px) scale(1.03);
     }
 
     #introbtn {
@@ -1005,15 +1037,15 @@
   <div id="usernamescreen"
     style="position:fixed; top:0; left:0; width:100%; height:100%; background:#060010; z-index:700; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:25px;">
     <h1
-      style="color:#a78bfa; font-size:32px; letter-spacing:4px; text-shadow:0 0 20px #7c3aed; margin:0; font-family:'Courier New',monospace;">
+      style="color:#a78bfa; font-size:32px; letter-spacing:4px; text-shadow:0 0 20px #7c3aed; margin:0; font-family:'Orbitron',sans-serif; font-weight:900;">
       IDENTIFY YOURSELF</h1>
-    <div style="color:#c4b5fd; font-size:14px; letter-spacing:1px; font-family:'Courier New',monospace;">Who will answer
+    <div style="color:#c4b5fd; font-size:14px; letter-spacing:1px; font-family:'Outfit',sans-serif;">Who will answer
       the call?</div>
     <input type="text" id="unameinput" placeholder="Enter your name..."
-      style="background:#0a0018; border:2px solid #2e1065; color:#e9d5ff; font-family:'Courier New',monospace; font-size:18px; padding:12px 20px; border-radius:8px; outline:none; text-align:center; width:280px; transition:border-color 0.2s;"
+      style="background:#0a0018; border:2px solid #2e1065; color:#e9d5ff; font-family:'Outfit',sans-serif; font-size:18px; padding:12px 20px; border-radius:8px; outline:none; text-align:center; width:280px; transition:border-color 0.2s;"
       onfocus="this.style.borderColor='#7c3aed'" onblur="this.style.borderColor='#2e1065'">
     <button onclick="submitUsername()"
-      style="background:#3b0764; border:2px solid #7c3aed; color:#e9d5ff; font-size:16px; padding:12px 40px; border-radius:8px; cursor:pointer; font-family:'Courier New',monospace; letter-spacing:2px; transition:all 0.2s; margin-top:10px;"
+      style="background:#3b0764; border:2px solid #7c3aed; color:#e9d5ff; font-size:16px; padding:12px 40px; border-radius:8px; cursor:pointer; font-family:'Orbitron',sans-serif; font-weight:700; letter-spacing:2px; transition:all 0.2s; margin-top:10px;"
       onmouseover="this.style.background='#5b21b6'; this.style.boxShadow='0 0 20px rgba(124, 58, 237, 0.5)';"
       onmouseout="this.style.background='#3b0764'; this.style.boxShadow='none';">ENTER REALM</button>
   </div>
@@ -2286,37 +2318,51 @@
 
     // ── MAIN LOOP ────────────────────────────────────────────────────────────────
     let _last = 0, _hudFrame = 0;
+    let _accumulator = 0;
+    const _dt = 1000 / 60; // 16.67ms per step
     // Cache coin-collected state so every() isn't called in draw path
     // Boss levels start with coins.length===0 so initialize based on boss flag
     let _allCoinsCollected = false;
-    function loop(ts = 0) {
-      gFrame++;
-      // Skip frame if tab was backgrounded too long (avoids death-spiral catch-up)
-      if (ts && _last && (ts - _last) > 180) { _last = ts; requestAnimationFrame(loop); return; }
-      _last = ts;
 
-      if (died) {
-        if (Object.values(keys).some(v => v)) {
-          died = false; player.hp = 100; hideMsg();
-          levelLocked = false;
-          initLevel(cLvl);
-          _allCoinsCollected = false;
+    function loop(ts = 0) {
+      if (!ts) {
+        requestAnimationFrame(loop);
+        return;
+      }
+      
+      let elapsed = ts - _last;
+      if (elapsed > 200) elapsed = _dt; // avoid death-spiral catch-up
+      _last = ts;
+      
+      _accumulator += elapsed;
+      
+      while (_accumulator >= _dt) {
+        gFrame++;
+        if (died) {
+          if (Object.values(keys).some(v => v)) {
+            died = false; player.hp = 100; hideMsg();
+            levelLocked = false;
+            initLevel(cLvl);
+            _allCoinsCollected = false;
+          }
+        } else if (!transitioning) {
+          updatePlayer();
+          updateTraps();
+          updateMinions();
+          updateBoss();
+          updateBolts();
+          updateCoinsPortal();
+          updateParticles();
+          
+          _hudFrame++;
+          if (_hudFrame >= 5) { _hudFrame = 0; updateHUD(); }
+        } else {
+          transTimer--;
+          if (transTimer <= 0 && !died) hideMsg();
+          updateParticles();
         }
-      } else if (!transitioning) {
-        updatePlayer();
-        updateTraps();
-        updateMinions();
-        updateBoss();
-        updateBolts();
-        updateCoinsPortal();
-        updateParticles();
-        // Throttle HUD DOM updates to ~12fps to avoid forced reflows every frame
-        _hudFrame++;
-        if (_hudFrame >= 5) { _hudFrame = 0; updateHUD(); }
-      } else {
-        transTimer--;
-        if (transTimer <= 0 && !died) hideMsg();
-        updateParticles();
+        
+        _accumulator -= _dt;
       }
 
       ctx.clearRect(0, 0, W, H);
