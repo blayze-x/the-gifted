@@ -3204,6 +3204,7 @@
       const input = document.getElementById('unameinput').value.trim();
       if (input.length > 0) {
         globalUsername = input;
+        localStorage.setItem('the_gifted_username', globalUsername);
       }
       document.getElementById('usernamescreen').style.display = 'none';
       document.getElementById('introscreen').style.display = 'flex';
@@ -3259,6 +3260,10 @@
     document.addEventListener('DOMContentLoaded', () => {
       const uinput = document.getElementById('unameinput');
       if (uinput) {
+        const savedName = localStorage.getItem('the_gifted_username');
+        if (savedName) {
+          uinput.value = savedName;
+        }
         uinput.focus();
         uinput.addEventListener('keydown', e => {
           if (e.key === 'Enter') submitUsername();
