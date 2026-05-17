@@ -1,0 +1,40 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // IDEAS: anyone can read; only authenticated users can create their own
+    match /ideas/{ideaId} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.text is string
+        && request.resource.data.text.size() >= 3
+        && request.resource.data.text.size() <= 200
+        && request.resource.data.votes == 0;
+      // Only increment votes (no other field changes)
+      allow update: if request.auth != null
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes'])
+        && request.resource.data.votes == resource.data.votes + 1;
+      // Only the owner can delete
+      allow delete: if request.auth != null
+        && resource.data.uid == request.auth.uid;
+    }
+
+    // LEADERBOARD: read by anyone, written only via Cloud Functions
+    match /leaderboard/{entryId} {
+      allow read: if true;
+      allow write: if false; // Cloud Functions only
+    }
+
+    // SAVES: each user accesses only their own document
+    match /saves/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // BANS: readable by owner, written only by Cloud Functions
+    match /bans/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+  }
+}
