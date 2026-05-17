@@ -1841,6 +1841,22 @@
       _starCache[theme] = oc;
       return oc;
     }
+    // Cached offscreen forest canvas
+    let _forestCache = null;
+    function getForestCanvas() {
+      if (_forestCache) return _forestCache;
+      const oc = document.createElement('canvas'); oc.width = W; oc.height = H;
+      const ox = oc.getContext('2d');
+      ox.fillStyle = '#0d3318';
+      for (const [tx, ty] of TREE_DATA) {
+        ox.beginPath(); ox.moveTo(tx, ty); ox.lineTo(tx - 25, ty - 80); ox.lineTo(tx + 25, ty - 80); ox.fill();
+        ox.fillStyle = '#0a2410';
+        ox.beginPath(); ox.moveTo(tx, ty - 60); ox.lineTo(tx - 20, ty - 130); ox.lineTo(tx + 20, ty - 130); ox.fill();
+        ox.fillStyle = '#0d3318';
+      }
+      _forestCache = oc;
+      return oc;
+    }
     function drawBg() {
       const th = T[LEVELS[cLvl].theme];
       ctx.fillStyle = th.sky; ctx.fillRect(0, 0, W, H);
@@ -1852,13 +1868,7 @@
         for (const lx of LAVA_FLOOR) ctx.fillRect(lx, 408, 100, 12);
       }
       if (LEVELS[cLvl].theme === 'forest') {
-        ctx.fillStyle = '#0d3318';
-        for (const [tx, ty] of TREE_DATA) {
-          ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(tx - 25, ty - 80); ctx.lineTo(tx + 25, ty - 80); ctx.fill();
-          ctx.fillStyle = '#0a2410';
-          ctx.beginPath(); ctx.moveTo(tx, ty - 60); ctx.lineTo(tx - 20, ty - 130); ctx.lineTo(tx + 20, ty - 130); ctx.fill();
-          ctx.fillStyle = '#0d3318';
-        }
+        ctx.drawImage(getForestCanvas(), 0, 0);
       }
     }
 
@@ -1878,27 +1888,27 @@
           ctx.restore();
         }
         
-        ctx.save();
+        // 1. Draw base platform body (curved)
+        ctx.fillStyle = th.plat;
         ctx.beginPath();
         ctx.roundRect(p.x, py, p.w, p.h, 8);
-        ctx.clip();
-        
-        ctx.fillStyle = th.plat;
         ctx.fill();
         
+        // 2. Draw curved top accent (only round top-left & top-right)
         ctx.fillStyle = th.platTop;
-        ctx.fillRect(p.x, py, p.w, 5);
+        ctx.beginPath();
+        ctx.roundRect(p.x, py, p.w, 5, [8, 8, 0, 0]);
+        ctx.fill();
         
+        // 3. Draw inner glowing pill dashes
         ctx.fillStyle = th.platGlow;
         for (let bx = p.x + 6; bx < p.x + p.w - 6; bx += 14) {
           ctx.beginPath();
           ctx.roundRect(bx, py + 8, 8, 3, 1.5);
           ctx.fill();
         }
-        
-        ctx.restore();
 
-        // Sleek outer neon outline following the curved edges
+        // 4. Sleek outer neon outline following the curved edges
         ctx.strokeStyle = th.platGlow;
         ctx.lineWidth = 1.5;
         ctx.beginPath();
