@@ -1870,14 +1870,40 @@
         const k = p.x + '|' + p.y;
         if (p.crumble && crumbleState[k]) {
           py += crumbleState[k] * 3;
-          const shake = (Math.random() - 0.5) * 1.5 * (crumbleState[k] / 4);
+          ctx.save();
+          ctx.beginPath();
+          ctx.roundRect(p.x, py, p.w, p.h, 8);
           ctx.fillStyle = `rgba(220,60,60,${Math.min(crumbleState[k] / 5, 0.6)})`;
-          ctx.fillRect(p.x, py, p.w, p.h);
+          ctx.fill();
+          ctx.restore();
         }
-        ctx.fillStyle = th.plat; ctx.fillRect(p.x, py, p.w, p.h);
-        ctx.fillStyle = th.platTop; ctx.fillRect(p.x, py, p.w, 4);
+        
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(p.x, py, p.w, p.h, 8);
+        ctx.clip();
+        
+        ctx.fillStyle = th.plat;
+        ctx.fill();
+        
+        ctx.fillStyle = th.platTop;
+        ctx.fillRect(p.x, py, p.w, 5);
+        
         ctx.fillStyle = th.platGlow;
-        for (let bx = p.x + 4; bx < p.x + p.w - 4; bx += 13) ctx.fillRect(bx, py + 6, 7, 2);
+        for (let bx = p.x + 6; bx < p.x + p.w - 6; bx += 14) {
+          ctx.beginPath();
+          ctx.roundRect(bx, py + 8, 8, 3, 1.5);
+          ctx.fill();
+        }
+        
+        ctx.restore();
+
+        // Sleek outer neon outline following the curved edges
+        ctx.strokeStyle = th.platGlow;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.roundRect(p.x, py, p.w, p.h, 8);
+        ctx.stroke();
       }
     }
 
@@ -2035,12 +2061,12 @@
       ctx.textAlign = 'left';
     }
 
-    // ── DRAW BOSS ────────────────────────────────────────────────────────────────
+    // ── DRAW MINIONS ─────────────────────────────────────────────────────────────
 
     function drawMinions() {
       for (const m of minions) {
         if (!m.alive) continue;
-        const mx = Math.round(m.x), my = Math.round(m.y), f = m.facing;
+        const mx = m.x, my = m.y, f = m.facing;
         // Shadow
         ctx.fillStyle = 'rgba(180,0,255,0.15)';
         ctx.beginPath(); ctx.ellipse(mx + 10, my + m.h + 2, 10, 3, 0, 0, Math.PI * 2); ctx.fill();
@@ -2053,20 +2079,24 @@
         ctx.lineTo(mx + (f > 0 ? 1 : m.w - 1), my + 16);
         ctx.fill();
         // Body
-        ctx.fillStyle = '#581c87'; ctx.fillRect(mx + 2, my + 8, m.w - 4, 14);
+        ctx.fillStyle = '#581c87';
+        ctx.beginPath(); ctx.roundRect(mx + 2, my + 8, m.w - 4, 14, 3); ctx.fill();
         // Head
-        ctx.fillStyle = '#ddd6fe'; ctx.fillRect(mx + 3, my, m.w - 6, 10);
+        ctx.fillStyle = '#ddd6fe';
+        ctx.beginPath(); ctx.roundRect(mx + 3, my, m.w - 6, 10, 3); ctx.fill();
         // Hood
-        ctx.fillStyle = '#3b0764'; ctx.fillRect(mx + 2, my - 2, m.w - 4, 6);
+        ctx.fillStyle = '#3b0764';
+        ctx.beginPath(); ctx.roundRect(mx + 2, my - 2, m.w - 4, 6, 2); ctx.fill();
         // Eyes
         ctx.fillStyle = '#ef4444';
-        ctx.fillRect(mx + (f > 0 ? 9 : 4), my + 2, 3, 3);
+        ctx.beginPath(); ctx.roundRect(mx + (f > 0 ? 9 : 4), my + 2, 3, 3, 1); ctx.fill();
         // Belt
-        ctx.fillStyle = '#fbbf24'; ctx.fillRect(mx + 3, my + 21, m.w - 6, 2);
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath(); ctx.roundRect(mx + 3, my + 21, m.w - 6, 2, 0.5); ctx.fill();
         // Legs
         ctx.fillStyle = '#3b0764';
-        ctx.fillRect(mx + 2, my + 22, 6, 6);
-        ctx.fillRect(mx + m.w - 8, my + 22, 6, 6);
+        ctx.beginPath(); ctx.roundRect(mx + 2, my + 22, 6, 6, 1.5); ctx.fill();
+        ctx.beginPath(); ctx.roundRect(mx + m.w - 8, my + 22, 6, 6, 1.5); ctx.fill();
         // Glow eyes pulse
         ctx.fillStyle = `rgba(239,68,68,${0.4 + 0.4 * Math.sin(gFrame * 0.12 + m.x)})`;
         ctx.beginPath(); ctx.arc(mx + (f > 0 ? 11 : 6), my + 4, 3, 0, Math.PI * 2); ctx.fill();
@@ -2075,43 +2105,70 @@
 
     function drawBoss() {
       if (!boss || boss.hp <= 0) return;
-      const bx = Math.round(boss.x), by = Math.round(boss.y);
+      const bx = boss.x, by = boss.y;
       const ang = boss.angry, face = boss.vx > 0 ? 1 : -1;
       const sw = Math.sin(boss.swingT) * 5;
 
-      ctx.fillStyle = 'rgba(100,0,0,0.12)'; ctx.beginPath(); ctx.ellipse(bx + 20, by + boss.h + 2, 25, 8, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(100,0,0,0.12)';
+      ctx.beginPath(); ctx.ellipse(bx + 20, by + boss.h + 2, 25, 8, 0, 0, Math.PI * 2); ctx.fill();
 
-      ctx.fillStyle = ang ? '#1a0000' : '#0c0020'; ctx.fillRect(bx, by, boss.w, boss.h);
+      ctx.fillStyle = ang ? '#1a0000' : '#0c0020';
+      ctx.beginPath(); ctx.roundRect(bx, by, boss.w, boss.h, 6); ctx.fill();
 
       // Helmet
-      ctx.fillStyle = ang ? '#7f1d1d' : '#2e1065'; ctx.fillRect(bx - 2, by - 4, boss.w + 4, 16);
-      ctx.fillStyle = ang ? '#dc2626' : '#6d28d9'; ctx.fillRect(bx, by - 4, boss.w, 5);
+      ctx.fillStyle = ang ? '#7f1d1d' : '#2e1065';
+      ctx.beginPath(); ctx.roundRect(bx - 2, by - 4, boss.w + 4, 16, 4); ctx.fill();
+      ctx.fillStyle = ang ? '#dc2626' : '#6d28d9';
+      ctx.beginPath(); ctx.roundRect(bx, by - 4, boss.w, 5, 2); ctx.fill();
+      
       // Horns
       ctx.fillStyle = ang ? '#ef4444' : '#a78bfa';
       ctx.beginPath(); ctx.moveTo(bx + 4, by - 4); ctx.lineTo(bx, by - 18); ctx.lineTo(bx + 8, by - 4); ctx.fill();
       ctx.beginPath(); ctx.moveTo(bx + boss.w - 4, by - 4); ctx.lineTo(bx + boss.w, by - 18); ctx.lineTo(bx + boss.w - 8, by - 4); ctx.fill();
+      
       // Eyes
-      ctx.fillStyle = ang ? '#fca5a5' : '#e9d5ff'; ctx.fillRect(bx + (face > 0 ? 22 : 8), by + 5, 8, 7);
-      ctx.fillStyle = ang ? '#dc2626' : '#7c3aed'; ctx.fillRect(bx + (face > 0 ? 24 : 10), by + 7, 4, 4);
-      ctx.fillStyle = '#fff'; ctx.fillRect(bx + (face > 0 ? 25 : 11), by + 8, 2, 2);
+      ctx.fillStyle = ang ? '#fca5a5' : '#e9d5ff';
+      ctx.beginPath(); ctx.roundRect(bx + (face > 0 ? 22 : 8), by + 5, 8, 7, 1.5); ctx.fill();
+      ctx.fillStyle = ang ? '#dc2626' : '#7c3aed';
+      ctx.beginPath(); ctx.roundRect(bx + (face > 0 ? 24 : 10), by + 7, 4, 4, 1); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.roundRect(bx + (face > 0 ? 25 : 11), by + 8, 2, 2, 0.5); ctx.fill();
+      
       // Chest + armor
-      ctx.fillStyle = ang ? '#991b1b' : '#1e1b4b'; ctx.fillRect(bx + 3, by + 14, boss.w - 6, 16);
-      ctx.fillStyle = ang ? '#7f1d1d' : '#312e81'; ctx.fillRect(bx + 2, by + 12, boss.w - 4, 3); ctx.fillRect(bx + 2, by + 30, boss.w - 4, 3);
-      ctx.fillStyle = ang ? '#b91c1c' : '#4338ca'; ctx.fillRect(bx + 8, by + 16, 8, 8); ctx.fillRect(bx + 24, by + 16, 8, 8);
+      ctx.fillStyle = ang ? '#991b1b' : '#1e1b4b';
+      ctx.beginPath(); ctx.roundRect(bx + 3, by + 14, boss.w - 6, 16, 3); ctx.fill();
+      ctx.fillStyle = ang ? '#7f1d1d' : '#312e81';
+      ctx.beginPath(); ctx.roundRect(bx + 2, by + 12, boss.w - 4, 3, 1); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(bx + 2, by + 30, boss.w - 4, 3, 1); ctx.fill();
+      ctx.fillStyle = ang ? '#b91c1c' : '#4338ca';
+      ctx.beginPath(); ctx.roundRect(bx + 8, by + 16, 8, 8, 2); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(bx + 24, by + 16, 8, 8, 2); ctx.fill();
+      
       // Pauldrons
-      ctx.fillStyle = ang ? '#dc2626' : '#4c1d95'; ctx.fillRect(bx - 5, by + 12, 10, 10); ctx.fillRect(bx + boss.w - 5, by + 12, 10, 10);
+      ctx.fillStyle = ang ? '#dc2626' : '#4c1d95';
+      ctx.beginPath(); ctx.roundRect(bx - 5, by + 12, 10, 10, 3); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(bx + boss.w - 5, by + 12, 10, 10, 3); ctx.fill();
+      
       // Arms (swing when walking)
       ctx.fillStyle = ang ? '#7f1d1d' : '#1e1b4b';
-      ctx.fillRect(bx - 4, by + 14 + sw | 0, 8, 14); ctx.fillRect(bx + boss.w - 4, by + 14 - sw | 0, 8, 14);
+      ctx.beginPath(); ctx.roundRect(bx - 4, by + 14 + sw, 8, 14, 2.5); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(bx + boss.w - 4, by + 14 - sw, 8, 14, 2.5); ctx.fill();
+      
       // Gauntlets
       ctx.fillStyle = ang ? '#ef4444' : '#6d28d9';
-      ctx.fillRect(bx - 5, by + 26 + sw | 0, 10, 6); ctx.fillRect(bx + boss.w - 5, by + 26 - sw | 0, 10, 6);
+      ctx.beginPath(); ctx.roundRect(bx - 5, by + 26 + sw, 10, 6, 2); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(bx + boss.w - 5, by + 26 - sw, 10, 6, 2); ctx.fill();
+      
       // Legs
       ctx.fillStyle = ang ? '#991b1b' : '#1e1b4b';
-      ctx.fillRect(bx + 3, by + 33, 11, 16); ctx.fillRect(bx + boss.w - 14, by + 33, 11, 16);
+      ctx.beginPath(); ctx.roundRect(bx + 3, by + 33, 11, 16, 3); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(bx + boss.w - 14, by + 33, 11, 16, 3); ctx.fill();
+      
       // Boots
       ctx.fillStyle = ang ? '#7f1d1d' : '#111827';
-      ctx.fillRect(bx + 2, by + 46, 13, 10); ctx.fillRect(bx + boss.w - 15, by + 46, 13, 10);
+      ctx.beginPath(); ctx.roundRect(bx + 2, by + 46, 13, 10, 3); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(bx + boss.w - 15, by + 46, 13, 10, 3); ctx.fill();
+      
       // Angry aura
       if (ang) {
         ctx.fillStyle = 'rgba(220,38,38,0.18)';
@@ -2119,14 +2176,13 @@
       }
     }
 
-    // ── DRAW PLAYER ──────────────────────────────────────────────────────────────
     function drawPlayer() {
-      const px = Math.round(player.x), py = Math.round(player.y);
+      const px = player.x, py = player.y;
       const f = player.facing;
       if (player.invincible > 0 && Math.floor(gFrame / 5) % 2 === 0) return;
       const ch = selectedChar || CHARACTERS[0];
-      const walk = player.onGround && player.walkDir !== 0 ? Math.sin(player.walkT) * 3 | 0 : 0;
-      const wave = Math.sin(player.capeT) * 4 | 0;
+      const walk = player.onGround && player.walkDir !== 0 ? Math.sin(player.walkT) * 3 : 0;
+      const wave = Math.sin(player.capeT) * 4;
       const glow = 0.5 + 0.5 * Math.sin(player.glowT);
       const shooting = player.shooting > 0;
 
@@ -2149,32 +2205,38 @@
       }
       // Cape
       ctx.fillStyle = ch.cape;
-      ctx.fillRect(px + (f > 0 ? -6 : 12), py + 6, 6, 16 + wave);
+      ctx.beginPath(); ctx.roundRect(px + (f > 0 ? -6 : 12), py + 6, 6, 16 + wave, 2); ctx.fill();
       ctx.fillStyle = ch.cape2;
-      ctx.fillRect(px + (f > 0 ? -5 : 13), py + 8, 4, 12 + wave);
+      ctx.beginPath(); ctx.roundRect(px + (f > 0 ? -5 : 13), py + 8, 4, 12 + wave, 1.5); ctx.fill();
 
       // Legs
       ctx.fillStyle = ch.pants;
-      ctx.fillRect(px + 1, py + 22, 6, 10 + walk);
-      ctx.fillRect(px + 9, py + 22, 6, 10 - walk);
+      ctx.beginPath(); ctx.roundRect(px + 1, py + 22, 6, 10 + walk, 2); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(px + 9, py + 22, 6, 10 - walk, 2); ctx.fill();
       ctx.fillStyle = ch.boots;
-      ctx.fillRect(px, py + 31 + walk, 8, 4);
-      ctx.fillRect(px + 8, py + 31 - walk, 8, 4);
+      ctx.beginPath(); ctx.roundRect(px, py + 31 + walk, 8, 4, 2); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(px + 8, py + 31 - walk, 8, 4, 2); ctx.fill();
 
       // Body
-      ctx.fillStyle = ch.body; ctx.fillRect(px + 2, py + 11, 12, 12);
-      ctx.fillStyle = ch.shirt; ctx.fillRect(px + 3, py + 14, 10, 3);
+      ctx.fillStyle = ch.body;
+      ctx.beginPath(); ctx.roundRect(px + 2, py + 11, 12, 12, 3); ctx.fill();
+      ctx.fillStyle = ch.shirt;
+      ctx.beginPath(); ctx.roundRect(px + 3, py + 14, 10, 3, 1); ctx.fill();
       if (ch.armor) {
-        ctx.fillStyle = ch.armorCol; ctx.fillRect(px + 2, py + 11, 12, 12);
-        ctx.fillStyle = ch.shirt; ctx.fillRect(px + 4, py + 13, 8, 10);
+        ctx.fillStyle = ch.armorCol;
+        ctx.beginPath(); ctx.roundRect(px + 2, py + 11, 12, 12, 3); ctx.fill();
+        ctx.fillStyle = ch.shirt;
+        ctx.beginPath(); ctx.roundRect(px + 4, py + 13, 8, 10, 2); ctx.fill();
       }
-      ctx.fillStyle = ch.belt; ctx.fillRect(px + 2, py + 22, 12, 3);
-      ctx.fillStyle = ch.beltB; ctx.fillRect(px + 6, py + 22, 4, 3);
+      ctx.fillStyle = ch.belt;
+      ctx.beginPath(); ctx.roundRect(px + 2, py + 22, 12, 3, 1); ctx.fill();
+      ctx.fillStyle = ch.beltB;
+      ctx.beginPath(); ctx.roundRect(px + 6, py + 22, 4, 3, 1); ctx.fill();
 
       // Arms
       ctx.fillStyle = ch.body;
-      ctx.fillRect(px + (f > 0 ? -3 : 13), py + 12, 5, shooting ? 14 : 11);
-      ctx.fillRect(px + (f > 0 ? 13 : -3), py + 12, 5, 11);
+      ctx.beginPath(); ctx.roundRect(px + (f > 0 ? -3 : 13), py + 12, 5, shooting ? 14 : 11, 2.5); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(px + (f > 0 ? 13 : -3), py + 12, 5, 11, 2.5); ctx.fill();
       if (shooting) {
         ctx.fillStyle = `rgba(${hexToRgb(ch.glow)},${glow * 0.7})`;
         const hx = f > 0 ? px - 3 : px + 13;
@@ -2198,24 +2260,31 @@
       }
 
       // Head
-      ctx.fillStyle = ch.skin; ctx.fillRect(px + 1, py, 14, 13);
+      ctx.fillStyle = ch.skin;
+      ctx.beginPath(); ctx.roundRect(px + 1, py, 14, 13, 4); ctx.fill();
       // Mask (ninja)
       if (ch.mask) {
-        ctx.fillStyle = ch.maskCol; ctx.fillRect(px + 1, py + 5, 14, 8);
+        ctx.fillStyle = ch.maskCol;
+        ctx.beginPath(); ctx.roundRect(px + 1, py + 5, 14, 8, 2); ctx.fill();
       }
       // Hair
-      ctx.fillStyle = ch.hair; ctx.fillRect(px, py - 3, 16, 6);
-      ctx.fillRect(px - 1, py - 3, 4, 10); ctx.fillRect(px + 13, py - 3, 4, 10);
-      ctx.fillStyle = ch.hairHL; ctx.fillRect(px + 2, py - 3, 10, 3);
+      ctx.fillStyle = ch.hair;
+      ctx.beginPath(); ctx.roundRect(px, py - 3, 16, 6, 2); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(px - 1, py - 3, 4, 10, 2); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(px + 13, py - 3, 4, 10, 2); ctx.fill();
+      ctx.fillStyle = ch.hairHL;
+      ctx.beginPath(); ctx.roundRect(px + 2, py - 3, 10, 3, 1); ctx.fill();
+
       // Eyes
       ctx.fillStyle = ch.eyeW;
-      ctx.fillRect(px + (f > 0 ? 8 : 3), py + 3, 4, 5);
-      ctx.fillRect(px + (f > 0 ? 3 : 9), py + 3, 4, 5);
+      ctx.beginPath(); ctx.roundRect(px + (f > 0 ? 8 : 3), py + 3, 4, 5, 1); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(px + (f > 0 ? 3 : 9), py + 3, 4, 5, 1); ctx.fill();
       ctx.fillStyle = ch.eye;
-      ctx.fillRect(px + (f > 0 ? 9 : 4), py + 4, 2, 3);
-      ctx.fillRect(px + (f > 0 ? 4 : 10), py + 4, 2, 3);
+      ctx.beginPath(); ctx.roundRect(px + (f > 0 ? 9 : 4), py + 4, 2, 3, 1); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(px + (f > 0 ? 4 : 10), py + 4, 2, 3, 1); ctx.fill();
       // Mouth
-      ctx.fillStyle = ch.eyeW; ctx.fillRect(px + 3, py + 9, 10, 2);
+      ctx.fillStyle = ch.eyeW;
+      ctx.beginPath(); ctx.roundRect(px + 3, py + 9, 10, 2, 1); ctx.fill();
 
       // Lightning bolt above head
       if (ch.lightning && gFrame % 20 < 10) {
@@ -2243,7 +2312,7 @@
       if (globalUsername && globalUsername !== 'Hero') {
         const label = globalUsername;
         ctx.save();
-        ctx.font = 'bold 11px \'Courier New\', monospace';
+        ctx.font = 'bold 10px \'Orbitron\', sans-serif';
         ctx.textAlign = 'center';
         if (!drawPlayer._nameplateW) {
           drawPlayer._nameplateW = ctx.measureText(label).width;
@@ -2730,6 +2799,29 @@
             db.collection('bans').doc(currentUID).get().then(snap => {
               if (snap.exists) localStorage.setItem(BAN_KEY, '1');
             });
+            // Account name cloud synchronization
+            const savedName = localStorage.getItem('the_gifted_username');
+            db.collection('users').doc(currentUID).get().then(snap => {
+              if (snap.exists) {
+                const cloudName = snap.data().username;
+                if (cloudName && (!savedName || savedName === 'Hero')) {
+                  globalUsername = cloudName;
+                  localStorage.setItem('the_gifted_username', cloudName);
+                  const uinput = document.getElementById('unameinput');
+                  if (uinput) uinput.value = cloudName;
+                } else if (savedName && savedName !== 'Hero' && savedName !== cloudName) {
+                  db.collection('users').doc(currentUID).set({
+                    username: savedName,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                  }, { merge: true });
+                }
+              } else if (savedName && savedName !== 'Hero') {
+                db.collection('users').doc(currentUID).set({
+                  username: savedName,
+                  updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+              }
+            }).catch(err => console.warn('[Firebase] Sync name error:', err));
           })
           .catch(err => console.warn('[Firebase] Auth failed:', err));
       } catch (err) {
@@ -3251,6 +3343,12 @@
       if (input.length > 0) {
         globalUsername = input;
         localStorage.setItem('the_gifted_username', globalUsername);
+        if (fbReady && currentUID) {
+          db.collection('users').doc(currentUID).set({
+            username: globalUsername,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true }).catch(err => console.warn('[Firebase] Submit username error:', err));
+        }
       }
       document.getElementById('usernamescreen').style.display = 'none';
       document.getElementById('introscreen').style.display = 'flex';
