@@ -1085,6 +1085,7 @@
       <div class="hitem"><span class="label">Score</span><span class="val" id="scoreV">0</span></div>
       <div class="hitem"><span class="label">Dash</span><span class="val" id="dashV" style="color:#4ade80">RDY</span>
       </div>
+      <div class="hitem"><span class="label">Shield</span><span class="val" id="shieldV" style="color:#22d3ee">RDY</span></div>
     </div>
     <button id="lbbtn" onclick="toggleLeaderboard()">🏆 SCORES</button>
     <div id="lbpanel">
@@ -1424,7 +1425,8 @@
       player = {
         x: lv.sx, y: lv.sy, w: 16, h: 32, vx: 0, vy: 0, onGround: false, facing: 1,
         dashCD: 0, dashing: false, dashT: 0, hp: Math.min((player && player.hp) || 100, 100), blastCD: 0,
-        invincible: 0, walkT: 0, walkDir: 0, capeT: 0, glowT: 0, jumpBuf: 0, shooting: 0
+        invincible: 0, walkT: 0, walkDir: 0, capeT: 0, glowT: 0, jumpBuf: 0, shooting: 0,
+        shieldT: 0, shieldCD: 0
       };
       coins = lv.coins.map(c => ({ ...c, collected: false, bob: Math.random() * Math.PI * 2 }));
       // Boss levels have no coins — portal should never open on boss levels
@@ -1476,6 +1478,12 @@
       const bcd = player.blastCD, bcdEl = document.getElementById('blastcd');
       if (bcdEl) bcdEl.textContent = bcd > 0 ? 'BLAST: ' + Math.ceil(bcd / 60) + 's' : 'BLAST: READY';
       if (bcdEl) bcdEl.style.color = bcd > 0 ? '#f87171' : '#4ade80';
+      const sv = document.getElementById('shieldV');
+      if (sv) {
+        if (player.shieldT > 0) { sv.textContent = Math.ceil(player.shieldT / 60) + 's'; sv.style.color = '#22d3ee'; }
+        else if (player.shieldCD > 0) { sv.textContent = Math.ceil(player.shieldCD / 60) + 's'; sv.style.color = '#f87171'; }
+        else { sv.textContent = 'RDY'; sv.style.color = '#22d3ee'; }
+      }
     }
 
     // ── MESSAGE ──────────────────────────────────────────────────────────────────
@@ -1509,6 +1517,13 @@
     // ── HURT ─────────────────────────────────────────────────────────────────────
     function hurtPlayer(dmg) {
       if (player.invincible > 0) return;
+      // Shield absorbs all damage — show a ripple and break the shield
+      if (player.shieldT > 0) {
+        burst(player.x + 8, player.y + 16, '#22d3ee', 12, 5, 28, 3);
+        player.shieldT = 0;
+        player.shieldCD = 300; // 5-second cooldown after breaking
+        return;
+      }
       player.hp -= dmg; player.invincible = 70; player.vy = -4;
       burst(player.x + 8, player.y + 16, '#f87171', 8, 5, 22);
       sfxHurt();
@@ -1717,19 +1732,31 @@
     }
 
     // ── PLAYER ───────────────────────────────────────────────────────────────────
-    let lastJump = false, lastZ = false, lastSh = false;
+    let lastJump = false, lastZ = false, lastSh = false, lastR = false;
     function updatePlayer() {
       const jP = keys['ArrowUp'] || keys['w'] || keys['W'] || keys[' '];
       const zP = keys['z'] || keys['Z'] || mouseDown;
       const shP = keys['Shift'];
       const lP = keys['ArrowLeft'] || keys['a'] || keys['A'];
       const rP = keys['ArrowRight'] || keys['d'] || keys['D'];
+      const rKeyP = keys['r'] || keys['R'];
 
       player.capeT += 0.07; player.glowT += 0.04;
       player.dashCD = Math.max(0, player.dashCD - 1);
       player.blastCD = Math.max(0, player.blastCD - 1);
       player.invincible = Math.max(0, player.invincible - 1);
       player.shooting = Math.max(0, player.shooting - 1);
+      const wasShielded = player.shieldT > 0;
+      if (player.shieldT > 0) player.shieldT--;
+      // When shield just expired naturally, start 5-second cooldown
+      if (wasShielded && player.shieldT === 0) player.shieldCD = 300;
+      player.shieldCD = Math.max(0, player.shieldCD - 1);
+
+      // Shield activation — R key, only when not already shielded and cooldown ready
+      if (rKeyP && !lastR && player.shieldT <= 0 && player.shieldCD <= 0) {
+        player.shieldT = 180; // 3 seconds at 60fps
+        burst(player.x + 8, player.y + 16, '#22d3ee', 10, 4, 25, 3);
+      }
 
       if (player.dashing) {
         player.dashT--;
@@ -1794,7 +1821,7 @@
         }
       }
 
-      lastJump = jP; lastZ = zP; lastSh = shP;
+      lastJump = jP; lastZ = zP; lastSh = shP; lastR = rKeyP;
     }
 
     // ── COINS + PORTAL ───────────────────────────────────────────────────────────
@@ -2407,6 +2434,24 @@
         ctx.shadowBlur = 4;
         ctx.fillStyle = '#ffffff';
         ctx.fillText(label, labelX, labelY - 2);
+        ctx.shadowBlur = 0;
+        ctx.restore();
+      }
+
+      // ── SHIELD BUBBLE ────────────────────────────────────────────────────────────
+      if (player.shieldT > 0) {
+        const pulse = Math.sin(gFrame * 0.18) * 2;
+        const shieldAlpha = player.shieldT < 60 ? (player.shieldT / 60) * 0.55 + Math.sin(gFrame * 0.5) * 0.2 : 0.55;
+        ctx.save();
+        ctx.shadowColor = '#22d3ee';
+        ctx.shadowBlur = 18;
+        ctx.strokeStyle = `rgba(34,211,238,${shieldAlpha + 0.3})`;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.ellipse(px + 8, py + 16, 18 + pulse, 22 + pulse, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = `rgba(34,211,238,${shieldAlpha * 0.18})`;
+        ctx.fill();
         ctx.shadowBlur = 0;
         ctx.restore();
       }
