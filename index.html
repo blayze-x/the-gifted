@@ -1498,6 +1498,14 @@
       for (let i = 0; i < count; i++) addP(x, y, col, (Math.random() - 0.5) * spd * 2, (Math.random() - 0.5) * spd * 2, life + (Math.random() * 10 | 0), sz);
     }
 
+    // Custom death phrases cycling on each death
+    const DEATH_PHRASES = [
+      "better luke neax time",
+      "oooo that not a good look on you",
+      "come on i was rooting for you"
+    ];
+    let deathCount = 0;
+
     // ── HURT ─────────────────────────────────────────────────────────────────────
     function hurtPlayer(dmg) {
       if (player.invincible > 0) return;
@@ -1506,7 +1514,9 @@
       sfxHurt();
       if (player.hp <= 0) {
         player.hp = 0; died = true;
-        showMsg('<span class="title">YOU DIED</span>Score: ' + score + '<span class="sub">Press any key to retry</span>', 9999);
+        const phrase = DEATH_PHRASES[deathCount % DEATH_PHRASES.length];
+        deathCount++;
+        showMsg('<span class="title">' + phrase.toUpperCase() + '</span>Score: ' + score + '<span class="sub">Press any key to retry</span>', 9999);
       }
     }
 
