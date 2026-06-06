@@ -1149,6 +1149,18 @@
         </div>
       </div>
       <div class="srow">
+        <label>🏞️ Scenery Theme</label>
+        <select id="themeOverrideSel" onchange="setThemeOverride(this.value)">
+          <option value="default">Default (Level-based)</option>
+          <option value="dark">Dungeon Depths</option>
+          <option value="forest">Enchanted Forest</option>
+          <option value="sky">Sky Castle</option>
+          <option value="lava">Lava Depths</option>
+          <option value="crystal">Crystal Cave</option>
+          <option value="void">Void Space</option>
+        </select>
+      </div>
+      <div class="srow">
         <label>💾 Save Progress</label>
         <div id="slot0" class="save-slot">Empty Slot 1</div>
         <div id="slot1" class="save-slot">Empty Slot 2</div>
@@ -1448,6 +1460,12 @@
     let cLvl = 0, score = 0, gFrame = 0, transitioning = false, transTimer = 0, died = false;
     let player, coins, trapStates = [], particles = [], magicBolts = [], boss = null, minions = [];
     let crumbleState = {}, portalAngle = 0;
+    let themeOverride = localStorage.getItem('themeOverride') || 'default';
+
+    function getActiveTheme() {
+      const defaultTheme = LEVELS[cLvl] ? LEVELS[cLvl].theme : 'dark';
+      return themeOverride === 'default' ? defaultTheme : themeOverride;
+    }
 
     // ── INIT ─────────────────────────────────────────────────────────────────────
     // initLevel sets _allCoinsCollected correctly after coins are loaded
@@ -1948,31 +1966,45 @@
     }
 
     function syncColorPicker() {
-      const th = T[LEVELS[cLvl].theme];
+      const th = T[getActiveTheme()];
       const picker = document.getElementById('bgColorPicker');
       if (picker) {
         picker.value = customBgColor || th.sky;
       }
     }
 
+    function setThemeOverride(theme) {
+      themeOverride = theme;
+      localStorage.setItem('themeOverride', theme);
+      syncColorPicker();
+    }
+
+    function syncThemeOverrideSel() {
+      const sel = document.getElementById('themeOverrideSel');
+      if (sel) {
+        sel.value = themeOverride;
+      }
+    }
+
     function drawBg() {
-      const th = T[LEVELS[cLvl].theme];
+      const activeTheme = getActiveTheme();
+      const th = T[activeTheme];
       ctx.fillStyle = customBgColor || th.sky; ctx.fillRect(0, 0, W, H);
       if (th.star) {
-        ctx.drawImage(getStarCanvas(LEVELS[cLvl].theme), 0, 0);
+        ctx.drawImage(getStarCanvas(activeTheme), 0, 0);
       }
-      if (LEVELS[cLvl].theme === 'lava' || LEVELS[cLvl].theme === 'void') {
+      if (activeTheme === 'lava' || activeTheme === 'void') {
         ctx.fillStyle = 'rgba(180,40,0,0.12)';
         for (const lx of LAVA_FLOOR) ctx.fillRect(lx, 408, 100, 12);
       }
-      if (LEVELS[cLvl].theme === 'forest') {
+      if (activeTheme === 'forest') {
         ctx.drawImage(getForestCanvas(), 0, 0);
       }
     }
 
     // ── DRAW PLATFORMS ───────────────────────────────────────────────────────────
     function drawPlatforms() {
-      const th = T[LEVELS[cLvl].theme];
+      const th = T[getActiveTheme()];
       for (const p of LEVELS[cLvl].plats) {
         let py = p.y;
         const k = p.x + '|' + p.y;
@@ -2880,6 +2912,7 @@
       if (document.getElementById('settings').classList.contains('open')) {
         refreshSlotUI();
         syncColorPicker();
+        syncThemeOverrideSel();
       }
     };
 
@@ -3542,6 +3575,7 @@
           if (e.key === 'Enter') submitUsername();
         });
       }
+      syncThemeOverrideSel();
     });
 
     // buildCharSelect called from showCharSelect()
