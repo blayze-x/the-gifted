@@ -1764,8 +1764,8 @@
         if (gFrame % 2 === 0) addP(player.x + 8, player.y + 16, '#38bdf8', -player.facing * (1 + Math.random() * 2), (Math.random() - 0.5) * 1.5, 14, 3);
         if (player.dashT <= 0) { player.dashing = false; player.vx = 0; player.walkDir = 0; }
       } else {
-        if (lP) { player.vx = -2.2; player.facing = -1; player.walkT += 0.18; player.walkDir = -1; }
-        else if (rP) { player.vx = 2.2; player.facing = 1; player.walkT += 0.18; player.walkDir = 1; }
+        if (lP) { player.vx = -3.5; player.facing = -1; player.walkT += 0.28; player.walkDir = -1; }
+        else if (rP) { player.vx = 3.5; player.facing = 1; player.walkT += 0.28; player.walkDir = 1; }
         else { player.vx *= 0.68; if (Math.abs(player.vx) < 0.05) player.vx = 0; player.walkDir = 0; }
         if (shP && !lastSh && player.dashCD <= 0) {
           player.dashing = true; player.dashT = 12; player.dashCD = 50;
@@ -1774,7 +1774,7 @@
       }
 
       if (jP && !lastJump && (player.onGround || player.jumpBuf > 0)) {
-        player.vy = -9.5; player.onGround = false; player.jumpBuf = 0;
+        player.vy = -11.5; player.onGround = false; player.jumpBuf = 0;
         burst(player.x + 8, player.y + player.h, '#c4b5fd', 6, 3, 16, 2);
         sfxJump();
       }
