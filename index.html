@@ -1152,12 +1152,9 @@
         <label>🏞️ Scenery Theme</label>
         <select id="themeOverrideSel" onchange="setThemeOverride(this.value)">
           <option value="default">Default (Level-based)</option>
-          <option value="dark">Dungeon Depths</option>
-          <option value="forest">Enchanted Forest</option>
-          <option value="sky">Sky Castle</option>
-          <option value="lava">Lava Depths</option>
-          <option value="crystal">Crystal Cave</option>
-          <option value="void">Void Space</option>
+          <option value="purple_domain">Purple Domain</option>
+          <option value="hell">Hell</option>
+          <option value="underworld">Underworld</option>
         </select>
       </div>
       <div class="srow">
@@ -1277,12 +1274,42 @@
 
     // ── THEMES ──────────────────────────────────────────────────────────────────
     const T = {
-      dark: { sky: '#060010', mid: '#0f0524', plat: '#2e1065', platTop: '#6d28d9', platGlow: '#a78bfa', star: true },
-      forest: { sky: '#071207', mid: '#0d2010', plat: '#14532d', platTop: '#15803d', platGlow: '#4ade80', star: false },
-      sky: { sky: '#060e1f', mid: '#0c1a35', plat: '#1e3a5f', platTop: '#1d4ed8', platGlow: '#60a5fa', star: true },
-      lava: { sky: '#150300', mid: '#2d0a00', plat: '#7c2d12', platTop: '#b91c1c', platGlow: '#f97316', star: false },
-      crystal: { sky: '#040418', mid: '#080830', plat: '#1e1b4b', platTop: '#4338ca', platGlow: '#818cf8', star: true },
-      void: { sky: '#000000', mid: '#050005', plat: '#1a0030', platTop: '#7e22ce', platGlow: '#d946ef', star: true },
+      purple_domain: {
+        sky: '#0c001a',
+        mid: '#120026',
+        plat: '#2e1065',
+        platTop: '#6d28d9',
+        platGlow: '#a78bfa',
+        doorMain: '#1e1035',
+        doorSub: '#2e1a4a',
+        doorGlow: '#6d28d9',
+        doorLight: '#a78bfa',
+        star: true
+      },
+      hell: {
+        sky: '#150300',
+        mid: '#2d0a00',
+        plat: '#450a0a',
+        platTop: '#991b1b',
+        platGlow: '#f87171',
+        doorMain: '#2d0707',
+        doorSub: '#450a0a',
+        doorGlow: '#991b1b',
+        doorLight: '#f87171',
+        star: false
+      },
+      underworld: {
+        sky: '#021202',
+        mid: '#042204',
+        plat: '#064e3b',
+        platTop: '#047857',
+        platGlow: '#34d399',
+        doorMain: '#02240a',
+        doorSub: '#064e3b',
+        doorGlow: '#047857',
+        doorLight: '#34d399',
+        star: false
+      }
     };
 
     // ── LEVEL DATA ───────────────────────────────────────────────────────────────
@@ -1463,8 +1490,17 @@
     let themeOverride = localStorage.getItem('themeOverride') || 'default';
 
     function getActiveTheme() {
-      const defaultTheme = LEVELS[cLvl] ? LEVELS[cLvl].theme : 'dark';
-      return themeOverride === 'default' ? defaultTheme : themeOverride;
+      const defaultTheme = LEVELS[cLvl] ? LEVELS[cLvl].theme : 'purple_domain';
+      let theme = themeOverride === 'default' ? defaultTheme : themeOverride;
+      // Map old theme names to the new unified themes
+      if (theme === 'dark' || theme === 'void' || theme === 'crystal' || theme === 'sky' || theme === 'purple_domain') {
+        return 'purple_domain';
+      } else if (theme === 'forest' || theme === 'underworld') {
+        return 'underworld';
+      } else if (theme === 'lava' || theme === 'hell') {
+        return 'hell';
+      }
+      return 'purple_domain';
     }
 
     // ── INIT ─────────────────────────────────────────────────────────────────────
@@ -1480,7 +1516,7 @@
       coins = lv.coins.map(c => ({ ...c, collected: false, bob: Math.random() * Math.PI * 2 }));
       // Boss levels have no coins — portal should never open on boss levels
       _allCoinsCollected = coins.length === 0 ? !lv.boss : false;
-      crumbleState = {}; particles = []; magicBolts = []; minions = [];
+      crumbleState = {}; particles = []; bgParticles = []; magicBolts = []; minions = [];
       trapStates = lv.traps.map(t => ({ ...t, a: t.a || 0, cx: t.x || 0, dir: t.dir || 1 }));
       if (lv.boss) {
         boss = {
@@ -1920,37 +1956,19 @@
     }
 
     // ── DRAW BACKGROUND ──────────────────────────────────────────────────────────
-    // Pre-baked star data – allocated once, never recreated each frame
-    const STAR_DATA = [[40, 18, 1.2], [115, 42, 1], [200, 12, 1.5], [320, 38, 1], [440, 10, 1.2], [515, 32, 1], [630, 18, 1.5], [695, 58, 1], [28, 72, 1], [160, 88, 1.2], [365, 78, 1], [570, 68, 1], [80, 130, 0.8], [260, 50, 0.9], [490, 140, 0.8], [640, 100, 1]];
-    const TREE_DATA = [[30, 420], [90, 420], [620, 420], [680, 420], [355, 420]];
-    const LAVA_FLOOR = Array.from({ length: 5 }, (_, i) => i * 155);
-    // Cached offscreen star canvas per theme
-    const _starCache = {};
-    function getStarCanvas(theme) {
-      if (_starCache[theme]) return _starCache[theme];
-      const oc = document.createElement('canvas'); oc.width = W; oc.height = H;
-      const ox = oc.getContext('2d');
-      ox.fillStyle = 'rgba(255,255,255,0.6)';
-      for (const [sx, sy, sz] of STAR_DATA) { ox.beginPath(); ox.arc(sx, sy, sz, 0, Math.PI * 2); ox.fill(); }
-      _starCache[theme] = oc;
-      return oc;
+    // Allocate 60 stars for purple domain with movement speed
+    const PURPLE_DOMAIN_STARS = [];
+    for (let i = 0; i < 60; i++) {
+      PURPLE_DOMAIN_STARS.push({
+        x: Math.random() * 720,
+        y: Math.random() * 380,
+        sz: Math.random() * 1.5 + 0.6,
+        speed: Math.random() * 0.15 + 0.05
+      });
     }
-    // Cached offscreen forest canvas
-    let _forestCache = null;
-    function getForestCanvas() {
-      if (_forestCache) return _forestCache;
-      const oc = document.createElement('canvas'); oc.width = W; oc.height = H;
-      const ox = oc.getContext('2d');
-      ox.fillStyle = '#0d3318';
-      for (const [tx, ty] of TREE_DATA) {
-        ox.beginPath(); ox.moveTo(tx, ty); ox.lineTo(tx - 25, ty - 80); ox.lineTo(tx + 25, ty - 80); ox.fill();
-        ox.fillStyle = '#0a2410';
-        ox.beginPath(); ox.moveTo(tx, ty - 60); ox.lineTo(tx - 20, ty - 130); ox.lineTo(tx + 20, ty - 130); ox.fill();
-        ox.fillStyle = '#0d3318';
-      }
-      _forestCache = oc;
-      return oc;
-    }
+
+    let bgParticles = [];
+
     // Custom background color customization
     let customBgColor = localStorage.getItem('customBgColor') || null;
 
@@ -1986,19 +2004,136 @@
       }
     }
 
+    function drawSkull(x, y) {
+      ctx.fillStyle = '#374151'; // dark grey bone color
+      // Cranium
+      ctx.beginPath();
+      ctx.arc(x, y, 7, Math.PI, 0);
+      ctx.fill();
+      ctx.fillRect(x - 7, y, 14, 5);
+      // Jaw
+      ctx.fillRect(x - 4, y + 5, 8, 4);
+      // Eye sockets
+      ctx.fillStyle = '#021202';
+      ctx.beginPath(); ctx.arc(x - 2.5, y + 1.5, 2, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x + 2.5, y + 1.5, 2, 0, Math.PI * 2); ctx.fill();
+      // Teeth details
+      ctx.strokeStyle = '#021202';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x - 1.5, y + 5); ctx.lineTo(x - 1.5, y + 8);
+      ctx.moveTo(x + 1.5, y + 5); ctx.lineTo(x + 1.5, y + 8);
+      ctx.stroke();
+    }
+
     function drawBg() {
       const activeTheme = getActiveTheme();
       const th = T[activeTheme];
       ctx.fillStyle = customBgColor || th.sky; ctx.fillRect(0, 0, W, H);
-      if (th.star) {
-        ctx.drawImage(getStarCanvas(activeTheme), 0, 0);
+      
+      if (activeTheme === 'purple_domain') {
+        ctx.fillStyle = 'rgba(233, 213, 255, 0.75)'; // Soft purple-ish white stars
+        for (const star of PURPLE_DOMAIN_STARS) {
+          // Move stars slowly using gFrame
+          const curX = (star.x - gFrame * star.speed) % W;
+          const drawX = curX < 0 ? curX + W : curX;
+          ctx.beginPath();
+          ctx.arc(drawX, star.y, star.sz, 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
-      if (activeTheme === 'lava' || activeTheme === 'void') {
-        ctx.fillStyle = 'rgba(180,40,0,0.12)';
-        for (const lx of LAVA_FLOOR) ctx.fillRect(lx, 408, 100, 12);
+      
+      if (activeTheme === 'hell') {
+        // Draw molten lava flow at the bottom
+        ctx.fillStyle = '#ea580c';
+        ctx.fillRect(0, 410, W, 10);
+        ctx.fillStyle = '#ef4444';
+        for (let lx = 0; lx < W; lx += 20) {
+          const waveH = Math.sin(gFrame * 0.05 + lx) * 3;
+          ctx.beginPath();
+          ctx.arc(lx, 410 + waveH, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Draw volcano in the bottom right corner
+        ctx.fillStyle = '#2d0a0a';
+        ctx.beginPath();
+        ctx.moveTo(540, 420);
+        ctx.lineTo(610, 310);
+        ctx.lineTo(650, 310);
+        ctx.lineTo(720, 420);
+        ctx.fill();
+
+        // Volcanic crater lava glow
+        ctx.fillStyle = '#f97316';
+        ctx.fillRect(610, 310, 40, 4);
+
+        // Volcano erupts every 10 seconds (600 frames). Let eruption last for 120 frames.
+        if (gFrame % 600 < 120 && gFrame % 4 === 0) {
+          // Spawn sparks rising from the crater
+          bgParticles.push({
+            x: 630 + (Math.random() - 0.5) * 20,
+            y: 310,
+            vx: (Math.random() - 0.5) * 3.5,
+            vy: -Math.random() * 5.5 - 3,
+            col: ['#ef4444', '#f97316', '#fbbf24'][Math.floor(Math.random() * 3)],
+            sz: Math.random() * 3.5 + 2.5,
+            life: 70 + Math.random() * 40
+          });
+        }
       }
-      if (activeTheme === 'forest') {
-        ctx.drawImage(getForestCanvas(), 0, 0);
+
+      if (activeTheme === 'underworld') {
+        // Draw green goo on the floor
+        ctx.fillStyle = '#022c22';
+        ctx.fillRect(0, 410, W, 10);
+        ctx.fillStyle = '#10b981';
+        for (let lx = 0; lx < W; lx += 25) {
+          const waveH = Math.sin(gFrame * 0.04 + lx) * 2.5;
+          ctx.beginPath();
+          ctx.arc(lx, 410 + waveH, 3.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Goo minor eruptions (bubbles popping up)
+        if (gFrame % 8 === 0 && Math.random() < 0.4) {
+          bgParticles.push({
+            x: Math.random() * W,
+            y: 410,
+            vx: (Math.random() - 0.5) * 0.8,
+            vy: -Math.random() * 2 - 1,
+            col: '#34d399',
+            sz: Math.random() * 2.5 + 1.5,
+            life: 35 + Math.random() * 25
+          });
+        }
+
+        // Draw skulls scattered in the background
+        const skulls = [
+          { x: 90, y: 360 }, { x: 230, y: 375 }, { x: 370, y: 355 },
+          { x: 490, y: 370 }, { x: 610, y: 360 }, { x: 140, y: 210 },
+          { x: 540, y: 230 }
+        ];
+        for (const s of skulls) {
+          drawSkull(s.x, s.y);
+        }
+      }
+
+      // Draw and update active background particles (used by hell and underworld)
+      if (activeTheme === 'hell' || activeTheme === 'underworld') {
+        for (let i = bgParticles.length - 1; i >= 0; i--) {
+          const p = bgParticles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          // Apply gravity
+          p.vy += activeTheme === 'hell' ? 0.16 : 0.05;
+          p.life--;
+          ctx.fillStyle = p.col;
+          ctx.fillRect(p.x, p.y, p.sz, p.sz);
+          if (p.life <= 0 || p.y > 420) {
+            bgParticles.splice(i, 1);
+          }
+        }
       }
     }
 
@@ -2110,47 +2245,82 @@
     function drawPortal() {
       if (LEVELS[cLvl].boss) return;
       const lv = LEVELS[cLvl];
+      const activeTheme = getActiveTheme();
+      const th = T[activeTheme];
       const allDone = _allCoinsCollected;
       const cx = lv.px + 22, cy = lv.py - 10;  // py = floor level, door base sits here
       const pulse = Math.sin(portalAngle) * 4;
-      const spin = portalAngle;
       const alpha = allDone ? 1 : 0.3;
       ctx.globalAlpha = alpha;
 
       // Outer glow aura
       if (allDone) {
         const aura = ctx.createRadialGradient(cx, cy, 10, cx, cy, 55 + pulse);
-        aura.addColorStop(0, 'rgba(139,92,246,0.35)');
-        aura.addColorStop(1, 'rgba(139,92,246,0)');
+        aura.addColorStop(0, th.doorGlow + '59'); // ~35% opacity
+        aura.addColorStop(1, 'transparent');
         ctx.fillStyle = aura;
         ctx.beginPath(); ctx.ellipse(cx, cy, 55 + pulse, 40 + pulse, 0, 0, Math.PI * 2); ctx.fill();
       }
 
-      // Stone archway - two pillars + top arch
-      ctx.fillStyle = '#1e1035';
+      // Devil horns decoration for hell
+      if (activeTheme === 'hell') {
+        ctx.fillStyle = '#b91c1c';
+        // Left horn
+        ctx.beginPath();
+        ctx.moveTo(cx - 15, cy - 75);
+        ctx.quadraticCurveTo(cx - 28, cy - 98, cx - 32, cy - 92);
+        ctx.quadraticCurveTo(cx - 20, cy - 80, cx - 8, cy - 74);
+        ctx.fill();
+        // Right horn
+        ctx.beginPath();
+        ctx.moveTo(cx + 15, cy - 75);
+        ctx.quadraticCurveTo(cx + 28, cy - 98, cx + 32, cy - 92);
+        ctx.quadraticCurveTo(cx + 20, cy - 80, cx + 8, cy - 74);
+        ctx.fill();
+      }
+
+      // Skull decoration for underworld
+      if (activeTheme === 'underworld') {
+        const sx = cx, sy = cy - 85;
+        ctx.fillStyle = '#e2e8f0';
+        ctx.beginPath();
+        ctx.arc(sx, sy, 7, Math.PI, 0);
+        ctx.fill();
+        ctx.fillRect(sx - 7, sy, 14, 5);
+        ctx.fillRect(sx - 4, sy + 5, 8, 3.5);
+        // Eye sockets
+        ctx.fillStyle = '#021202';
+        ctx.beginPath(); ctx.arc(sx - 2.2, sy + 2, 1.8, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(sx + 2.2, sy + 2, 1.8, 0, Math.PI * 2); ctx.fill();
+      }
+
+      // Stone archway - two pillars + top arch using theme colors
+      ctx.fillStyle = th.doorMain;
       ctx.fillRect(cx - 28, cy - 52, 12, 60); // left pillar
       ctx.fillRect(cx + 16, cy - 52, 12, 60); // right pillar
       // Pillar bricks
-      ctx.fillStyle = '#2e1a4a';
+      ctx.fillStyle = th.doorSub;
       for (let row = 0; row < 5; row++) {
         ctx.fillRect(cx - 27, cy - 50 + row * 12, 10, 10);
         ctx.fillRect(cx + 17, cy - 50 + row * 12, 10, 10);
       }
       // Pillar highlights
-      ctx.fillStyle = '#4c2a7a';
+      ctx.fillStyle = th.doorGlow;
       ctx.fillRect(cx - 28, cy - 52, 3, 60);
       ctx.fillRect(cx + 26, cy - 52, 3, 60);
 
       // Arch top (semi-circle)
-      ctx.fillStyle = '#1e1035';
+      ctx.fillStyle = th.doorMain;
       ctx.beginPath(); ctx.arc(cx, cy - 52, 28, Math.PI, 0); ctx.fill();
-      ctx.fillStyle = '#2e1a4a';
+      ctx.fillStyle = th.doorSub;
       ctx.beginPath(); ctx.arc(cx, cy - 52, 25, Math.PI, 0); ctx.fill();
+      
       // Arch keystone
-      ctx.fillStyle = '#6d28d9';
+      ctx.fillStyle = th.doorGlow;
       ctx.beginPath(); ctx.moveTo(cx - 6, cy - 78); ctx.lineTo(cx, cy - 88); ctx.lineTo(cx + 6, cy - 78); ctx.fill();
+      
       // Arch rune dots
-      ctx.fillStyle = allDone ? '#a78bfa' : '#4c1d95';
+      ctx.fillStyle = allDone ? th.doorLight : th.doorMain;
       for (let a = 0; a < 6; a++) {
         const angle = Math.PI + a * (Math.PI / 5);
         const rx = cx + Math.cos(angle) * 22, ry = (cy - 52) + Math.sin(angle) * 22;
@@ -2158,35 +2328,21 @@
       }
 
       // Portal void background
-      ctx.fillStyle = '#0a0018';
+      ctx.fillStyle = '#050010';
       ctx.beginPath(); ctx.ellipse(cx, cy - 18, 18, 30, 0, 0, Math.PI * 2); ctx.fill();
 
-      // Swirling portal rings
-      for (let r = 3; r >= 0; r--) {
-        const rad = 8 + r * 5 + pulse * (r % 2 === 0 ? 1 : -1);
-        const hue = r * 30;
-        ctx.strokeStyle = allDone ? `hsl(${270 + hue},80%,${40 + r * 8}%)` : `hsl(${270 + hue},40%,20%)`;
-        ctx.lineWidth = 2.5 - r * 0.4;
-        ctx.beginPath(); ctx.ellipse(cx, cy - 18, rad, rad * 1.6, spin * (r % 2 === 0 ? 1 : -1), 0, Math.PI * 2); ctx.stroke();
-      }
-
-      // Spinning inner sparkles
+      // Pulsing energy inside (spinning rings removed)
       if (allDone) {
-        for (let s = 0; s < 6; s++) {
-          const sa = spin * 2 + s * (Math.PI / 3);
-          const sr = 10 + Math.sin(spin + s) * 4;
-          const sx2 = cx + Math.cos(sa) * sr, sy2 = (cy - 18) + Math.sin(sa) * sr * 1.5;
-          ctx.fillStyle = `rgba(221,214,254,${0.5 + 0.5 * Math.sin(spin * 3 + s)})`;
-          ctx.beginPath(); ctx.arc(sx2, sy2, 1.5, 0, Math.PI * 2); ctx.fill();
-        }
+        const energyGrad = ctx.createRadialGradient(cx, cy - 18, 2, cx, cy - 18, 22 + pulse);
+        energyGrad.addColorStop(0, th.doorLight);
+        energyGrad.addColorStop(0.5, th.doorGlow);
+        energyGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = energyGrad;
+        ctx.beginPath(); ctx.ellipse(cx, cy - 18, 18, 30, 0, 0, Math.PI * 2); ctx.fill();
+      } else {
+        ctx.fillStyle = 'rgba(0,0,0,0.65)';
+        ctx.beginPath(); ctx.ellipse(cx, cy - 18, 18, 30, 0, 0, Math.PI * 2); ctx.fill();
       }
-
-      // Portal core bright center
-      const coreGrad = ctx.createRadialGradient(cx, cy - 18, 0, cx, cy - 18, 10);
-      coreGrad.addColorStop(0, allDone ? 'rgba(237,233,254,0.9)' : 'rgba(100,80,150,0.3)');
-      coreGrad.addColorStop(1, 'rgba(109,40,217,0)');
-      ctx.fillStyle = coreGrad;
-      ctx.beginPath(); ctx.ellipse(cx, cy - 18, 10, 16, 0, 0, Math.PI * 2); ctx.fill();
 
       // Base/ground shadow under door
       ctx.fillStyle = 'rgba(0,0,0,0.4)';
@@ -2196,7 +2352,7 @@
 
       // Label
       ctx.font = 'bold 10px monospace'; ctx.textAlign = 'center';
-      ctx.fillStyle = allDone ? '#a78bfa' : '#4b5563';
+      ctx.fillStyle = allDone ? th.doorLight : '#4b5563';
       ctx.fillText(allDone ? '- ENTER -' : 'collect all coins', cx, cy + 22);
       ctx.textAlign = 'left';
     }
